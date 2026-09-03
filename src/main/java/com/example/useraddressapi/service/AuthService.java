@@ -32,7 +32,8 @@ public class AuthService {
         }
 
         Map<String, Object> user = new LinkedHashMap<>();
-        user.put("name", request.name());
+        user.put("firstName", request.firstName());
+        user.put("lastName", request.lastName());
         user.put("email", request.email());
         user.put("password", passwordEncoder.encode(request.password()));
         user.put("role", "USER");
@@ -43,7 +44,7 @@ public class AuthService {
                 (String) saved.get("id"), request.email(), "USER");
 
         return new AuthResponse(token, (String) saved.get("id"),
-                request.email(), request.name());
+                request.email(), request.firstName(), request.lastName());
     }
 
     public AuthResponse login(LoginRequest request) {
@@ -58,6 +59,7 @@ public class AuthService {
                 (String) user.get("id"), request.email(), (String) user.get("role"));
 
         return new AuthResponse(token, (String) user.get("id"),
-                (String) user.get("email"), (String) user.get("name"));
+                (String) user.get("email"), (String) user.get("firstName"),
+                (String) user.get("lastName"));
     }
 }

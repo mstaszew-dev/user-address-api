@@ -47,7 +47,8 @@ public class UserService {
         }
 
         Map<String, Object> updates = new LinkedHashMap<>();
-        if (dto.name() != null) updates.put("name", dto.name());
+        if (dto.firstName() != null) updates.put("firstName", dto.firstName());
+        if (dto.lastName() != null) updates.put("lastName", dto.lastName());
         if (dto.email() != null) updates.put("email", dto.email());
         if (dto.role() != null) updates.put("role", dto.role());
 
@@ -66,7 +67,8 @@ public class UserService {
     private UserDto toDto(Map<String, Object> map) {
         return new UserDto(
                 (String) map.get("id"),
-                (String) map.get("name"),
+                (String) map.get("firstName"),
+                (String) map.get("lastName"),
                 (String) map.get("email"),
                 (String) map.get("role"),
                 (String) map.get("createdAt")

@@ -35,7 +35,7 @@ class AddressControllerTest {
     private String registerAndGetToken(String email) throws Exception {
         MvcResult result = mockMvc.perform(post("/api/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"name\":\"Test User\",\"email\":\"" + email + "\",\"password\":\"password123\"}"))
+                        .content("{\"firstName\":\"Test\",\"lastName\":\"User\",\"email\":\"" + email + "\",\"password\":\"password123\"}"))
                 .andExpect(status().isCreated())
                 .andReturn();
         return objectMapper.readTree(result.getResponse().getContentAsString())

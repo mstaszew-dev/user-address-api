@@ -35,7 +35,7 @@ class UserControllerTest {
     private String registerAndGetToken(String email) throws Exception {
         MvcResult result = mockMvc.perform(post("/api/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"name\":\"Test User\",\"email\":\"" + email + "\",\"password\":\"password123\"}"))
+                        .content("{\"firstName\":\"Test\",\"lastName\":\"User\",\"email\":\"" + email + "\",\"password\":\"password123\"}"))
                 .andExpect(status().isCreated())
                 .andReturn();
         String body = result.getResponse().getContentAsString();
@@ -87,9 +87,10 @@ class UserControllerTest {
         mockMvc.perform(put("/api/users/" + userId)
                         .header("Authorization", "Bearer " + token)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"name\":\"Alice Updated\",\"email\":\"alice@test.com\"}"))
+                        .content("{\"firstName\":\"Alice\",\"lastName\":\"Updated\",\"email\":\"alice@test.com\"}"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.name").value("Alice Updated"));
+                .andExpect(jsonPath("$.data.firstName").value("Alice"))
+                .andExpect(jsonPath("$.data.lastName").value("Updated"));
     }
 
     @Test

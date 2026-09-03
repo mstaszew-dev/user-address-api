@@ -52,13 +52,14 @@ class AuthServiceTest {
             return user;
         });
 
-        RegisterRequest request = new RegisterRequest("Test User", "test@test.com", "password123");
+        RegisterRequest request = new RegisterRequest("Test", "User", "test@test.com", "password123");
         AuthResponse response = authService.register(request);
 
         assertNotNull(response.token());
         assertEquals("generated-id", response.userId());
         assertEquals("test@test.com", response.email());
-        assertEquals("Test User", response.name());
+        assertEquals("Test", response.firstName());
+        assertEquals("User", response.lastName());
         verify(userRepository).save(any());
     }
 
@@ -67,7 +68,7 @@ class AuthServiceTest {
         when(userRepository.findByEmail("test@test.com"))
                 .thenReturn(Optional.of(java.util.Map.of("id", "existing", "email", "test@test.com")));
 
-        RegisterRequest request = new RegisterRequest("Test User", "test@test.com", "password123");
+        RegisterRequest request = new RegisterRequest("Test", "User", "test@test.com", "password123");
 
         assertThrows(DuplicateResourceException.class, () -> authService.register(request));
     }
@@ -78,7 +79,8 @@ class AuthServiceTest {
         user.put("id", "user-1");
         user.put("email", "test@test.com");
         user.put("password", "encoded-password");
-        user.put("name", "Test User");
+        user.put("firstName", "Test");
+        user.put("lastName", "User");
         user.put("role", "USER");
 
         when(userRepository.findByEmail("test@test.com")).thenReturn(Optional.of(user));
