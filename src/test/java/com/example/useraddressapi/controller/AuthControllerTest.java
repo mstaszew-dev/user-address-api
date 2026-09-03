@@ -37,11 +37,12 @@ class AuthControllerTest {
     void testRegister_returns201WithToken() throws Exception {
         String response = mockMvc.perform(post("/api/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"name\":\"Test User\",\"email\":\"test@test.com\",\"password\":\"password123\"}"))
+                        .content("{\"firstName\":\"Test\",\"lastName\":\"User\",\"email\":\"test@test.com\",\"password\":\"password123\"}"))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data.token").isNotEmpty())
                 .andExpect(jsonPath("$.data.email").value("test@test.com"))
+                .andExpect(jsonPath("$.data.firstName").value("Test"))
                 .andReturn().getResponse().getContentAsString();
 
         JsonNode json = objectMapper.readTree(response);
@@ -52,12 +53,12 @@ class AuthControllerTest {
     void testRegister_returns409OnDuplicateEmail() throws Exception {
         mockMvc.perform(post("/api/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"name\":\"Test User\",\"email\":\"dup@test.com\",\"password\":\"password123\"}"))
+                        .content("{\"firstName\":\"Test\",\"lastName\":\"User\",\"email\":\"dup@test.com\",\"password\":\"password123\"}"))
                 .andExpect(status().isCreated());
 
         mockMvc.perform(post("/api/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"name\":\"Second User\",\"email\":\"dup@test.com\",\"password\":\"password123\"}"))
+                        .content("{\"firstName\":\"Second\",\"lastName\":\"User\",\"email\":\"dup@test.com\",\"password\":\"password123\"}"))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.success").value(false));
     }
@@ -66,7 +67,7 @@ class AuthControllerTest {
     void testRegister_returns400OnInvalidInput() throws Exception {
         mockMvc.perform(post("/api/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"name\":\"\",\"email\":\"not-an-email\",\"password\":\"123\"}"))
+                        .content("{\"firstName\":\"\",\"lastName\":\"\",\"email\":\"not-an-email\",\"password\":\"123\"}"))
                 .andExpect(status().isBadRequest());
     }
 
@@ -74,7 +75,7 @@ class AuthControllerTest {
     void testLogin_returns200WithToken() throws Exception {
         mockMvc.perform(post("/api/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"name\":\"Test User\",\"email\":\"test@test.com\",\"password\":\"password123\"}"))
+                        .content("{\"firstName\":\"Test\",\"lastName\":\"User\",\"email\":\"test@test.com\",\"password\":\"password123\"}"))
                 .andExpect(status().isCreated());
 
         mockMvc.perform(post("/api/auth/login")
@@ -86,11 +87,21 @@ class AuthControllerTest {
     }
 
     @Test
-    void testLogin_returns400OnBadCredentials() throws Exception {
+    void testLogin_returns401OnBadCredentials() throws Exception {
         mockMvc.perform(post("/api/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"email\":\"nobody@test.com\",\"password\":\"wrongpass\"}"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.success").value(false));
+    }
+
+    @Test
+    void testLogin_returns400OnMalformedBody() throws Exception {
+        mockMvc.perform(post("/api/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{not json"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.success").value(false));
     }
+
 }

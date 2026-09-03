@@ -39,7 +39,7 @@ class EndToEndIntegrationTest {
         // 1. Register user
         MvcResult register = mockMvc.perform(post("/api/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"name\":\"John Doe\",\"email\":\"john@example.com\",\"password\":\"secret123\"}"))
+                        .content("{\"firstName\":\"John\",\"lastName\":\"Doe\",\"email\":\"john@example.com\",\"password\":\"secret123\"}"))
                 .andExpect(status().isCreated())
                 .andReturn();
         String token = objectMapper.readTree(register.getResponse().getContentAsString())

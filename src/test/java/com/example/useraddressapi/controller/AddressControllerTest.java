@@ -35,7 +35,7 @@ class AddressControllerTest {
     private String registerAndGetToken(String email) throws Exception {
         MvcResult result = mockMvc.perform(post("/api/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"name\":\"Test User\",\"email\":\"" + email + "\",\"password\":\"password123\"}"))
+                        .content("{\"firstName\":\"Test\",\"lastName\":\"User\",\"email\":\"" + email + "\",\"password\":\"password123\"}"))
                 .andExpect(status().isCreated())
                 .andReturn();
         return objectMapper.readTree(result.getResponse().getContentAsString())
@@ -122,7 +122,7 @@ class AddressControllerTest {
     }
 
     @Test
-    void testDeleteAddress_returns200() throws Exception {
+    void testDeleteAddress_returns204() throws Exception {
         String token = registerAndGetToken("user@test.com");
         String userId = getCurrentUserId(token);
 

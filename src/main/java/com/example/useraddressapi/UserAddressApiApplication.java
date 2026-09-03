@@ -23,7 +23,8 @@ public class UserAddressApiApplication {
         return args -> {
             if (userRepository.findByEmail("admin@example.com").isEmpty()) {
                 Map<String, Object> admin = new LinkedHashMap<>();
-                admin.put("name", "Admin");
+                admin.put("firstName", "Admin");
+                admin.put("lastName", "User");
                 admin.put("email", "admin@example.com");
                 admin.put("password", encoder.encode(adminPassword()));
                 admin.put("role", "ADMIN");

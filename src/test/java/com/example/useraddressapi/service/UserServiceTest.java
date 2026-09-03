@@ -38,7 +38,8 @@ class UserServiceTest {
     void setUp() {
         sampleUser = new LinkedHashMap<>();
         sampleUser.put("id", "user-1");
-        sampleUser.put("name", "Alice");
+        sampleUser.put("firstName", "Alice");
+        sampleUser.put("lastName", "Wonder");
         sampleUser.put("email", "alice@test.com");
         sampleUser.put("role", "USER");
         sampleUser.put("createdAt", "2024-01-01T00:00:00Z");
@@ -51,7 +52,8 @@ class UserServiceTest {
         List<UserDto> users = userService.getAllUsers();
 
         assertEquals(1, users.size());
-        assertEquals("Alice", users.get(0).name());
+        assertEquals("Alice", users.get(0).firstName());
+        assertEquals("Wonder", users.get(0).lastName());
     }
 
     @Test
@@ -60,7 +62,8 @@ class UserServiceTest {
 
         UserDto user = userService.getUserById("user-1");
 
-        assertEquals("Alice", user.name());
+        assertEquals("Alice", user.firstName());
+        assertEquals("Wonder", user.lastName());
         assertEquals("alice@test.com", user.email());
     }
 
@@ -72,19 +75,21 @@ class UserServiceTest {
     }
 
     @Test
-    void testUpdateUser_updatesNameAndEmail() {
+    void testUpdateUser_updatesNamesAndEmail() {
         when(userRepository.findById("user-1")).thenReturn(Optional.of(sampleUser));
         when(userRepository.findByEmail("new@test.com")).thenReturn(Optional.empty());
 
         Map<String, Object> updated = new LinkedHashMap<>(sampleUser);
-        updated.put("name", "Bob");
+        updated.put("firstName", "Bob");
+        updated.put("lastName", "Builder");
         updated.put("email", "new@test.com");
         when(userRepository.update(eq("user-1"), any())).thenReturn(Optional.of(updated));
 
-        UserUpdateDto dto = new UserUpdateDto("Bob", "new@test.com", null);
+        UserUpdateDto dto = new UserUpdateDto("Bob", "Builder", "new@test.com", null);
         UserDto result = userService.updateUser("user-1", dto);
 
-        assertEquals("Bob", result.name());
+        assertEquals("Bob", result.firstName());
+        assertEquals("Builder", result.lastName());
         assertEquals("new@test.com", result.email());
     }
 
@@ -96,7 +101,7 @@ class UserServiceTest {
         updated.put("role", "ADMIN");
         when(userRepository.update(eq("user-1"), any())).thenReturn(Optional.of(updated));
 
-        UserUpdateDto dto = new UserUpdateDto(null, null, "ADMIN");
+        UserUpdateDto dto = new UserUpdateDto(null, null, null, "ADMIN");
         UserDto result = userService.updateUser("user-1", dto);
 
         assertEquals("ADMIN", result.role());
@@ -109,7 +114,7 @@ class UserServiceTest {
         Map<String, Object> updated = new LinkedHashMap<>(sampleUser);
         when(userRepository.update(eq("user-1"), any())).thenReturn(Optional.of(updated));
 
-        UserUpdateDto dto = new UserUpdateDto("Alice", "alice@test.com", null);
+        UserUpdateDto dto = new UserUpdateDto("Alice", "Wonder", "alice@test.com", null);
         UserDto result = userService.updateUser("user-1", dto);
 
         assertEquals("alice@test.com", result.email());
@@ -117,11 +122,27 @@ class UserServiceTest {
     }
 
     @Test
+    void testUpdateUser_changesFirstNameAndLastNameSeparately() {
+        when(userRepository.findById("user-1")).thenReturn(Optional.of(sampleUser));
+
+        Map<String, Object> updated = new LinkedHashMap<>(sampleUser);
+        updated.put("firstName", "Alicia");
+        updated.put("lastName", "Wonder");
+        when(userRepository.update(eq("user-1"), any())).thenReturn(Optional.of(updated));
+
+        UserUpdateDto dto = new UserUpdateDto("Alicia", null, null, null);
+        UserDto result = userService.updateUser("user-1", dto);
+
+        assertEquals("Alicia", result.firstName());
+        assertEquals("Wonder", result.lastName());
+    }
+
+    @Test
     void testUpdateUser_throwsWhenUpdateReturnsEmpty() {
         when(userRepository.findById("user-1")).thenReturn(Optional.of(sampleUser));
         when(userRepository.update(eq("user-1"), any())).thenReturn(Optional.empty());
 
-        UserUpdateDto dto = new UserUpdateDto("Bob", null, null);
+        UserUpdateDto dto = new UserUpdateDto("Bob", null, null, null);
 
         assertThrows(ResourceNotFoundException.class, () -> userService.updateUser("user-1", dto));
     }
@@ -130,7 +151,7 @@ class UserServiceTest {
     void testUpdateUser_throwsWhenUserNotFound() {
         when(userRepository.findById("missing")).thenReturn(Optional.empty());
 
-        UserUpdateDto dto = new UserUpdateDto("Bob", null, null);
+        UserUpdateDto dto = new UserUpdateDto("Bob", null, null, null);
 
         assertThrows(ResourceNotFoundException.class, () -> userService.updateUser("missing", dto));
     }
@@ -144,7 +165,7 @@ class UserServiceTest {
         otherUser.put("email", "taken@test.com");
         when(userRepository.findByEmail("taken@test.com")).thenReturn(Optional.of(otherUser));
 
-        UserUpdateDto dto = new UserUpdateDto(null, "taken@test.com", null);
+        UserUpdateDto dto = new UserUpdateDto(null, null, "taken@test.com", null);
 
         assertThrows(DuplicateResourceException.class, () -> userService.updateUser("user-1", dto));
     }

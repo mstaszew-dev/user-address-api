@@ -4,6 +4,7 @@ import com.example.useraddressapi.db.UserRepository;
 import com.example.useraddressapi.dto.AuthResponse;
 import com.example.useraddressapi.dto.LoginRequest;
 import com.example.useraddressapi.dto.RegisterRequest;
+import com.example.useraddressapi.exception.AuthenticationFailedException;
 import com.example.useraddressapi.exception.DuplicateResourceException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -17,6 +18,7 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
@@ -45,29 +47,29 @@ class AuthServiceTest {
 
     @Test
     void testRegister_createsUserAndReturnsToken() {
-        when(userRepository.findByEmail("test@test.com")).thenReturn(Optional.empty());
-        when(userRepository.save(any())).thenAnswer(inv -> {
-            java.util.Map<String, Object> user = inv.getArgument(0);
+        when(userRepository.saveIfEmailFree(eq("test@test.com"), any())).thenAnswer(inv -> {
+            java.util.Map<String, Object> user = inv.getArgument(1);
             user.put("id", "generated-id");
-            return user;
+            return java.util.Optional.of(user);
         });
 
-        RegisterRequest request = new RegisterRequest("Test User", "test@test.com", "password123");
+        RegisterRequest request = new RegisterRequest("Test", "User", "test@test.com", "password123");
         AuthResponse response = authService.register(request);
 
         assertNotNull(response.token());
         assertEquals("generated-id", response.userId());
         assertEquals("test@test.com", response.email());
-        assertEquals("Test User", response.name());
-        verify(userRepository).save(any());
+        assertEquals("Test", response.firstName());
+        assertEquals("User", response.lastName());
+        verify(userRepository).saveIfEmailFree(eq("test@test.com"), any());
     }
 
     @Test
     void testRegister_throwsOnDuplicateEmail() {
-        when(userRepository.findByEmail("test@test.com"))
-                .thenReturn(Optional.of(java.util.Map.of("id", "existing", "email", "test@test.com")));
+        when(userRepository.saveIfEmailFree(eq("test@test.com"), any()))
+                .thenReturn(java.util.Optional.empty());
 
-        RegisterRequest request = new RegisterRequest("Test User", "test@test.com", "password123");
+        RegisterRequest request = new RegisterRequest("Test", "User", "test@test.com", "password123");
 
         assertThrows(DuplicateResourceException.class, () -> authService.register(request));
     }
@@ -78,7 +80,8 @@ class AuthServiceTest {
         user.put("id", "user-1");
         user.put("email", "test@test.com");
         user.put("password", "encoded-password");
-        user.put("name", "Test User");
+        user.put("firstName", "Test");
+        user.put("lastName", "User");
         user.put("role", "USER");
 
         when(userRepository.findByEmail("test@test.com")).thenReturn(Optional.of(user));
@@ -97,7 +100,7 @@ class AuthServiceTest {
 
         LoginRequest request = new LoginRequest("nobody@test.com", "password123");
 
-        assertThrows(IllegalArgumentException.class, () -> authService.login(request));
+        assertThrows(AuthenticationFailedException.class, () -> authService.login(request));
     }
 
     @Test
@@ -112,6 +115,6 @@ class AuthServiceTest {
 
         LoginRequest request = new LoginRequest("test@test.com", "wrong-password");
 
-        assertThrows(IllegalArgumentException.class, () -> authService.login(request));
+        assertThrows(AuthenticationFailedException.class, () -> authService.login(request));
     }
 }
