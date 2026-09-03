@@ -90,13 +90,15 @@ export default function UserDetailPage() {
     return null;
   }
 
-  function handleProfileSaved() {
+  function handleProfileSaved(updated: User) {
+    setProfile(updated);
     void loadAll();
-    if (profile && sessionUser && profile.id === sessionUser.userId) {
+    if (sessionUser && updated.id === sessionUser.userId) {
       updateSession({
-        email: profile.email,
-        firstName: profile.firstName,
-        lastName: profile.lastName
+        email: updated.email,
+        firstName: updated.firstName,
+        lastName: updated.lastName,
+        role: updated.role
       });
     }
   }

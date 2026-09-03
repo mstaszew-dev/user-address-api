@@ -36,12 +36,12 @@ function jsonResponse(body: unknown, status = 200) {
   return { ok: status >= 200 && status < 300, status, json: () => Promise.resolve(body) };
 }
 
-function renderDetail(role = 'ADMIN') {
+function renderDetail(role = 'ADMIN', sessionUserId = 'admin') {
   localStorage.setItem(
     'authUser',
     JSON.stringify({
       token: 'tok',
-      userId: 'admin',
+      userId: sessionUserId,
       email: 'admin@example.com',
       firstName: 'Admin',
       lastName: 'User',
@@ -298,5 +298,23 @@ describe('UserDetailPage', () => {
     expect(screen.queryByRole('button', { name: /edit profile/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /add address/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /delete/i })).not.toBeInTheDocument();
+  });
+
+  it('syncs the stored session after the session user edits their own profile', async () => {
+    const actor = userEvent.setup();
+    // session user IS the profile being edited (session userId u1 == profile u1)
+    renderDetail('ADMIN', 'u1');
+
+    await screen.findByText('alice@test.com');
+    await actor.click(screen.getByRole('button', { name: /edit profile/i }));
+    const lastNameField = await screen.findByLabelText(/last name/i);
+    await actor.clear(lastNameField);
+    await actor.type(lastNameField, 'Renamed');
+    await actor.click(screen.getByRole('button', { name: /save/i }));
+
+    await waitFor(() => {
+      const stored = JSON.parse(localStorage.getItem('authUser')!);
+      expect(stored.lastName).toBe('Renamed');
+    });
   });
 });

@@ -14,13 +14,15 @@ import java.util.Map;
 @Component
 public class JwtAuthenticationEntryPoint implements AuthenticationEntryPoint {
 
+    private static final ObjectMapper MAPPER = new ObjectMapper();
+
     @Override
     public void commence(HttpServletRequest request,
                           HttpServletResponse response,
                           AuthenticationException authException) throws IOException {
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
         response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-        new ObjectMapper().writeValue(response.getOutputStream(),
+        MAPPER.writeValue(response.getOutputStream(),
                 Map.of("success", false, "message", "Unauthorized: " + authException.getMessage()));
     }
 }

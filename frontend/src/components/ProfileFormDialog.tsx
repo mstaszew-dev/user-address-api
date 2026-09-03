@@ -17,7 +17,7 @@ interface ProfileFormDialogProps {
   open: boolean;
   user: User;
   onClose: () => void;
-  onSaved: () => void;
+  onSaved: (updated: User) => void;
 }
 
 export default function ProfileFormDialog({
@@ -59,10 +59,12 @@ export default function ProfileFormDialog({
     if (email.trim() !== user.email) updates.email = email.trim();
     if (role !== user.role) updates.role = role;
     try {
+      let updated = user;
       if (Object.keys(updates).length > 0) {
-        await apiCall('PUT', '/users/' + user.id, updates);
+        const response = await apiCall<User>('PUT', '/users/' + user.id, updates);
+        updated = response.data;
       }
-      onSaved();
+      onSaved(updated);
       onClose();
     } catch (e) {
       setError((e as Error).message);

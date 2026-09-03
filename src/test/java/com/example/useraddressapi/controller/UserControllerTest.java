@@ -134,7 +134,8 @@ class UserControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"lastName\":\"Hacked\"}"))
                 .andExpect(status().isForbidden())
-                .andExpect(jsonPath("$.success").value(false));
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.message").value("Admin role required for this operation"));
     }
 
     @Test

@@ -54,7 +54,7 @@ export default function AboutPage() {
           <ListItem>
             <ListItemText
               primary="Authorization"
-              secondary="JWT login with an intentional admin-flat model: any authenticated user can manage users and addresses. Expired sessions are detected centrally and the user is returned to the login flow."
+              secondary="Role-based access control enforced server-side: admins manage all users and addresses, standard users have read-only access. Roles are carried in the JWT; expired sessions are detected centrally and the user is returned to the login flow."
             />
           </ListItem>
           <ListItem>

@@ -75,27 +75,33 @@ Open http://localhost:5173 and sign in with the admin credentials. The Vite dev 
 All endpoints return JSON wrapped in an `ApiResponse` envelope
 (`{ success, message, data }`).
 
-| Method | Path                       | Auth   | Description                    |
-|--------|----------------------------|--------|--------------------------------|
-| POST   | `/api/auth/register`       | Public | Create a user (returns JWT)    |
-| POST   | `/api/auth/login`          | Public | Login, returns a JWT           |
-| GET    | `/api/users`               | Bearer | List users                     |
-| GET    | `/api/users/{id}`          | Bearer | Get a user                     |
-| PUT    | `/api/users/{id}`          | Bearer | Update a user (partial)        |
-| DELETE | `/api/users/{id}`          | Bearer | Delete a user (204, cascades)  |
-| GET    | `/api/addresses/user/{id}` | Bearer | List a user's addresses        |
-| POST   | `/api/addresses`           | Bearer | Create an address for a user   |
-| PUT    | `/api/addresses/{id}`      | Bearer | Update an address (partial)    |
-| DELETE | `/api/addresses/{id}`      | Bearer | Delete an address (204)        |
+| Method | Path                       | Auth          | Description                    |
+|--------|----------------------------|---------------|--------------------------------|
+| POST   | `/api/auth/register`       | Public        | Create a user (returns JWT)    |
+| POST   | `/api/auth/login`          | Public        | Login, returns a JWT           |
+| GET    | `/api/users`               | Bearer        | List users                     |
+| GET    | `/api/users/{id}`          | Bearer        | Get a user                     |
+| PUT    | `/api/users/{id}`          | Bearer, ADMIN | Update a user (partial)        |
+| DELETE | `/api/users/{id}`          | Bearer, ADMIN | Delete a user (204, cascades)  |
+| GET    | `/api/addresses/user/{id}` | Bearer        | List a user's addresses        |
+| POST   | `/api/addresses`           | Bearer, ADMIN | Create an address for a user   |
+| PUT    | `/api/addresses/{id}`      | Bearer, ADMIN | Update an address (partial)    |
+| DELETE | `/api/addresses/{id}`      | Bearer, ADMIN | Delete an address (204)        |
 
 Authenticate by sending `Authorization: Bearer <token>`.
 
-### Authorization model (intentional design)
+### Authorization model
 
-Any authenticated user is treated as an administrator who can manage all users and addresses.
-There is no per-user ownership isolation by design, to keep the assessment scope focused. In a
-multi-tenant product, ownership/role checks would be enforced in the service layer using the
-JWT subject.
+Role-based access control is enforced server-side with method security:
+
+- **ADMIN** can manage all users and addresses (create, update, delete).
+- **USER** has read-only access to all users and addresses (including their own profile).
+- Registration is public and always creates a `USER`; an admin can change roles via the
+  profile edit endpoint.
+
+Roles are carried in the JWT, so role changes take effect at the next login and a demoted
+admin retains access until their token expires (24 hours). Missing or unknown role claims
+fail closed: the request is treated as read-only.
 
 ## Configuration
 

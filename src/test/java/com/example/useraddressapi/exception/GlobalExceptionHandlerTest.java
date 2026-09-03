@@ -66,4 +66,33 @@ class GlobalExceptionHandlerTest {
         assertTrue(res.getBody().message().contains("must not be blank"));
         assertTrue(res.getBody().message().contains("must be at least 6 characters"));
     }
+
+    @Test
+    void handleAccessDenied_returns403WithStableMessage() {
+        ResponseEntity<ApiResponse<Void>> res = handler.handleAccessDenied(
+                new org.springframework.security.access.AccessDeniedException("Denied"));
+
+        assertEquals(HttpStatus.FORBIDDEN, res.getStatusCode());
+        assertEquals("Admin role required for this operation", res.getBody().message());
+        assertFalse(res.getBody().success());
+    }
+
+    @Test
+    void handleNoResourceFound_returns404() {
+        ResponseEntity<ApiResponse<Void>> res = handler.handleNoResourceFound(
+                new org.springframework.web.servlet.resource.NoResourceFoundException(
+                        org.springframework.http.HttpMethod.GET, "/api/unknown"));
+
+        assertEquals(HttpStatus.NOT_FOUND, res.getStatusCode());
+        assertFalse(res.getBody().success());
+    }
+
+    @Test
+    void handleMethodNotSupported_returns405() {
+        ResponseEntity<ApiResponse<Void>> res = handler.handleMethodNotSupported(
+                new org.springframework.web.HttpRequestMethodNotSupportedException("DELETE"));
+
+        assertEquals(HttpStatus.METHOD_NOT_ALLOWED, res.getStatusCode());
+        assertFalse(res.getBody().success());
+    }
 }
