@@ -3,7 +3,11 @@ import type { ApiResponse } from './types';
 export const TOKEN_KEY = 'token';
 export const AUTH_USER_KEY = 'authUser';
 
-export async function apiCall<T>(method: string, url: string, body?: unknown): Promise<ApiResponse<T>> {
+export async function apiCall<T>(
+  method: string,
+  url: string,
+  body?: unknown
+): Promise<ApiResponse<T>> {
   const headers: Record<string, string> = { 'Content-Type': 'application/json' };
   const token = window.localStorage.getItem(TOKEN_KEY);
   if (token) {

@@ -1,4 +1,11 @@
-import { Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle } from '@mui/material';
+import {
+  Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle
+} from '@mui/material';
 
 interface ConfirmDialogProps {
   open: boolean;
@@ -8,7 +15,13 @@ interface ConfirmDialogProps {
   onClose: () => void;
 }
 
-export default function ConfirmDialog({ open, title, message, onConfirm, onClose }: ConfirmDialogProps) {
+export default function ConfirmDialog({
+  open,
+  title,
+  message,
+  onConfirm,
+  onClose
+}: ConfirmDialogProps) {
   return (
     <Dialog open={open} onClose={onClose} maxWidth="xs" fullWidth>
       <DialogTitle>{title}</DialogTitle>

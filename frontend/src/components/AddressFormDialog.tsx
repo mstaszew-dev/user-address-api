@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import type { FormEvent } from 'react';
 import {
   Alert,
@@ -24,7 +24,13 @@ interface AddressFormDialogProps {
   onSaved: () => void;
 }
 
-export default function AddressFormDialog({ open, address, userId, onClose, onSaved }: AddressFormDialogProps) {
+export default function AddressFormDialog({
+  open,
+  address,
+  userId,
+  onClose,
+  onSaved
+}: AddressFormDialogProps) {
   const editing = address !== null;
   const [street, setStreet] = useState('');
   const [city, setCity] = useState('');
@@ -35,7 +41,9 @@ export default function AddressFormDialog({ open, address, userId, onClose, onSa
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
-  useEffect(() => {
+  const [lastOpen, setLastOpen] = useState<boolean | null>(null);
+  if (open !== lastOpen) {
+    setLastOpen(open);
     if (open) {
       setStreet(address?.street ?? '');
       setCity(address?.city ?? '');
@@ -45,7 +53,7 @@ export default function AddressFormDialog({ open, address, userId, onClose, onSa
       setType(address?.type ?? 'HOME');
       setError('');
     }
-  }, [open, address]);
+  }
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();

@@ -57,10 +57,7 @@ describe('apiCall', () => {
   });
 
   it('handles 204 no-content without parsing json', async () => {
-    vi.stubGlobal(
-      'fetch',
-      vi.fn().mockResolvedValue({ ok: true, status: 204 })
-    );
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, status: 204 }));
 
     const res = await apiCall('DELETE', '/users/u1');
 

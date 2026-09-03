@@ -13,8 +13,24 @@ const user = {
   role: 'USER',
   createdAt: '2026-01-01T00:00:00Z'
 };
-const homeAddress = { id: 'a1', userId: 'u1', street: '1 Main St', city: 'Tel Aviv', zipCode: '61000', country: 'IL', type: 'HOME' };
-const workAddress = { id: 'a2', userId: 'u1', street: '9 Work Ave', city: 'Haifa', zipCode: '30000', country: 'IL', type: 'WORK' };
+const homeAddress = {
+  id: 'a1',
+  userId: 'u1',
+  street: '1 Main St',
+  city: 'Tel Aviv',
+  zipCode: '61000',
+  country: 'IL',
+  type: 'HOME'
+};
+const workAddress = {
+  id: 'a2',
+  userId: 'u1',
+  street: '9 Work Ave',
+  city: 'Haifa',
+  zipCode: '30000',
+  country: 'IL',
+  type: 'WORK'
+};
 
 function jsonResponse(body: unknown, status = 200) {
   return { ok: status >= 200 && status < 300, status, json: () => Promise.resolve(body) };
@@ -42,7 +58,13 @@ describe('UserDetailPage', () => {
     localStorage.setItem('token', 'tok');
     localStorage.setItem(
       'authUser',
-      JSON.stringify({ token: 'tok', userId: 'admin', email: 'admin@example.com', firstName: 'Admin', lastName: 'User' })
+      JSON.stringify({
+        token: 'tok',
+        userId: 'admin',
+        email: 'admin@example.com',
+        firstName: 'Admin',
+        lastName: 'User'
+      })
     );
     store = { profile: { ...user }, addresses: [{ ...homeAddress }, { ...workAddress }] };
     fetchMock = vi.fn().mockImplementation((url: string, opts?: RequestInit) => {
@@ -52,26 +74,36 @@ describe('UserDetailPage', () => {
         return Promise.resolve(jsonResponse({ success: true, message: 'ok', data: store.profile }));
       }
       if (url === '/api/addresses/user/u1' && method === 'GET') {
-        return Promise.resolve(jsonResponse({ success: true, message: 'ok', data: store.addresses }));
+        return Promise.resolve(
+          jsonResponse({ success: true, message: 'ok', data: store.addresses })
+        );
       }
       if (url === '/api/users/u1' && method === 'PUT') {
         store.profile = { ...store.profile, ...body };
-        return Promise.resolve(jsonResponse({ success: true, message: 'updated', data: store.profile }));
+        return Promise.resolve(
+          jsonResponse({ success: true, message: 'updated', data: store.profile })
+        );
       }
       if (url === '/api/addresses' && method === 'POST') {
         const created = { ...body, id: 'a3' };
         store.addresses = [...store.addresses, created];
-        return Promise.resolve(jsonResponse({ success: true, message: 'created', data: created }, 201));
+        return Promise.resolve(
+          jsonResponse({ success: true, message: 'created', data: created }, 201)
+        );
       }
       if (url === '/api/addresses/a1' && method === 'PUT') {
         store.addresses = store.addresses.map((a) => (a.id === 'a1' ? { ...a, ...body } : a));
-        return Promise.resolve(jsonResponse({ success: true, message: 'updated', data: store.addresses[0] }));
+        return Promise.resolve(
+          jsonResponse({ success: true, message: 'updated', data: store.addresses[0] })
+        );
       }
       if (url === '/api/addresses/a1' && method === 'DELETE') {
         store.addresses = store.addresses.filter((a) => a.id !== 'a1');
         return Promise.resolve({ ok: true, status: 204 });
       }
-      return Promise.resolve(jsonResponse({ success: false, message: 'unexpected', data: null }, 500));
+      return Promise.resolve(
+        jsonResponse({ success: false, message: 'unexpected', data: null }, 500)
+      );
     });
     vi.stubGlobal('fetch', fetchMock);
   });
@@ -102,13 +134,21 @@ describe('UserDetailPage', () => {
     const lastNameField = await screen.findByLabelText(/last name/i);
     await actor.clear(lastNameField);
     await actor.type(lastNameField, 'NewName');
+    await actor.click(screen.getByLabelText(/^role/i));
+    await actor.click(await screen.findByRole('option', { name: 'ADMIN' }));
+    await actor.clear(screen.getByLabelText(/email/i));
+    await actor.type(screen.getByLabelText(/email/i), 'alice.new@test.com');
     await actor.click(screen.getByRole('button', { name: /save/i }));
 
     await waitFor(() => {
-      const call = fetchMock.mock.calls.find(([url, opts]) => url === '/api/users/u1' && opts?.method === 'PUT');
+      const call = fetchMock.mock.calls.find(
+        ([url, opts]) => url === '/api/users/u1' && opts?.method === 'PUT'
+      );
       expect(call).toBeTruthy();
     });
-    const [, opts] = fetchMock.mock.calls.find(([url, opts]) => url === '/api/users/u1' && opts?.method === 'PUT') as [string, RequestInit];
+    const [, opts] = fetchMock.mock.calls.find(
+      ([url, opts]) => url === '/api/users/u1' && opts?.method === 'PUT'
+    ) as [string, RequestInit];
     const body = JSON.parse(opts.body as string);
     expect(body.lastName).toBe('NewName');
     expect(body.firstName).toBeUndefined();
@@ -123,17 +163,30 @@ describe('UserDetailPage', () => {
     await actor.click(screen.getByRole('button', { name: /add address/i }));
     await actor.type(await screen.findByLabelText(/street/i), '5 New St');
     await actor.type(screen.getByLabelText(/^city/i), 'Netanya');
+    await actor.type(screen.getByLabelText(/^state/i), 'Center');
     await actor.type(screen.getByLabelText(/zip code/i), '40000');
     await actor.type(screen.getByLabelText(/country/i), 'IL');
+    await actor.click(screen.getByLabelText(/^type/i));
+    await actor.click(await screen.findByRole('option', { name: 'WORK' }));
     await actor.click(screen.getByRole('button', { name: /save/i }));
 
     await waitFor(() => {
-      const call = fetchMock.mock.calls.find(([url, opts]) => url === '/api/addresses' && opts?.method === 'POST');
+      const call = fetchMock.mock.calls.find(
+        ([url, opts]) => url === '/api/addresses' && opts?.method === 'POST'
+      );
       expect(call).toBeTruthy();
     });
-    const [url, opts] = fetchMock.mock.calls.find(([u, o]) => u === '/api/addresses' && o?.method === 'POST') as [string, RequestInit];
+    const [url, opts] = fetchMock.mock.calls.find(
+      ([u, o]) => u === '/api/addresses' && o?.method === 'POST'
+    ) as [string, RequestInit];
     const body = JSON.parse(opts.body as string);
-    expect(body).toMatchObject({ userId: 'u1', street: '5 New St', city: 'Netanya', zipCode: '40000', country: 'IL' });
+    expect(body).toMatchObject({
+      userId: 'u1',
+      street: '5 New St',
+      city: 'Netanya',
+      zipCode: '40000',
+      country: 'IL'
+    });
     expect(url).toBe('/api/addresses');
     expect(await screen.findByText('5 New St')).toBeInTheDocument();
   });
@@ -153,10 +206,14 @@ describe('UserDetailPage', () => {
     await actor.click(screen.getByRole('button', { name: /save/i }));
 
     await waitFor(() => {
-      const call = fetchMock.mock.calls.find(([url, opts]) => url === '/api/addresses/a1' && opts?.method === 'PUT');
+      const call = fetchMock.mock.calls.find(
+        ([url, opts]) => url === '/api/addresses/a1' && opts?.method === 'PUT'
+      );
       expect(call).toBeTruthy();
     });
-    const [, opts] = fetchMock.mock.calls.find(([url, opts]) => url === '/api/addresses/a1' && opts?.method === 'PUT') as [string, RequestInit];
+    const [, opts] = fetchMock.mock.calls.find(
+      ([url, opts]) => url === '/api/addresses/a1' && opts?.method === 'PUT'
+    ) as [string, RequestInit];
     const body = JSON.parse(opts.body as string);
     expect(body.city).toBe('Herzliya');
     expect(await screen.findByText('Herzliya')).toBeInTheDocument();
@@ -173,12 +230,33 @@ describe('UserDetailPage', () => {
     await actor.click(await screen.findByRole('button', { name: /confirm/i }));
 
     await waitFor(() => {
-      expect(fetchMock).toHaveBeenCalledWith('/api/addresses/a1', expect.objectContaining({ method: 'DELETE' }));
+      expect(fetchMock).toHaveBeenCalledWith(
+        '/api/addresses/a1',
+        expect.objectContaining({ method: 'DELETE' })
+      );
     });
     await waitFor(() => {
       const refetches = fetchMock.mock.calls.filter(([url]) => url === '/api/addresses/user/u1');
       expect(refetches.length).toBeGreaterThanOrEqual(2);
     });
+
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+  });
+
+  it('cancelling the delete dialog keeps the address', async () => {
+    const actor = userEvent.setup();
+    renderDetail();
+
+    await screen.findByText('1 Main St');
+    const addressHeading = screen.getByText('1 Main St');
+    const card = addressHeading.closest('.MuiCard-root') as HTMLElement;
+    await actor.click(within(card).getByRole('button', { name: /delete/i }));
+    await actor.click(await screen.findByRole('button', { name: /cancel/i }));
+
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+    expect(screen.getByText('1 Main St')).toBeInTheDocument();
+    await actor.keyboard('{Escape}');
+    await waitFor(() => expect(screen.queryByRole('alert')).not.toBeInTheDocument());
   });
 
   it('navigates back to the list via back action', async () => {

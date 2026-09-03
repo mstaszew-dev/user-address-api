@@ -11,7 +11,9 @@ export default function AddressCard({ address, onEdit, onDelete }: AddressCardPr
   return (
     <Card variant="outlined" sx={{ height: '100%' }} data-testid="address-card">
       <CardContent>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1 }}>
+        <Box
+          sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1 }}
+        >
           <Typography variant="subtitle1" component="h3">
             {address.street}
           </Typography>

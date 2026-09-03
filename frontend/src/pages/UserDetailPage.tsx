@@ -51,7 +51,7 @@ export default function UserDetailPage() {
   }, [id]);
 
   useEffect(() => {
-    loadAll();
+    void loadAll();
   }, [loadAll]);
 
   function openAddAddress() {
@@ -96,7 +96,9 @@ export default function UserDetailPage() {
           <>
             <Paper variant="outlined" sx={{ p: 3, mb: 4 }}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                <Avatar sx={{ width: 56, height: 56, bgcolor: 'primary.main' }}>{initials(profile)}</Avatar>
+                <Avatar sx={{ width: 56, height: 56, bgcolor: 'primary.main' }}>
+                  {initials(profile)}
+                </Avatar>
                 <Box sx={{ flexGrow: 1 }}>
                   <Typography variant="h5" component="h1">
                     {profile.firstName} {profile.lastName}
@@ -105,14 +107,19 @@ export default function UserDetailPage() {
                     {profile.email}
                   </Typography>
                 </Box>
-                <Chip label={profile.role} color={profile.role === 'ADMIN' ? 'secondary' : 'default'} />
+                <Chip
+                  label={profile.role}
+                  color={profile.role === 'ADMIN' ? 'secondary' : 'default'}
+                />
                 <Button variant="outlined" onClick={() => setProfileEditOpen(true)}>
                   Edit Profile
                 </Button>
               </Box>
             </Paper>
 
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+            <Box
+              sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}
+            >
               <Typography variant="h6" component="h2">
                 Addresses ({addresses.length})
               </Typography>
@@ -122,7 +129,9 @@ export default function UserDetailPage() {
             </Box>
             {addresses.length === 0 ? (
               <Paper variant="outlined" sx={{ p: 3, textAlign: 'center' }}>
-                <Typography color="text.secondary">No addresses yet. Add one to get started.</Typography>
+                <Typography color="text.secondary">
+                  No addresses yet. Add one to get started.
+                </Typography>
               </Paper>
             ) : (
               <Grid container spacing={2}>
@@ -155,11 +164,20 @@ export default function UserDetailPage() {
       <ConfirmDialog
         open={deleteTarget !== null}
         title="Delete address"
-        message={deleteTarget ? 'Delete the address at ' + deleteTarget.street + '? This cannot be undone.' : ''}
+        message={
+          deleteTarget
+            ? 'Delete the address at ' + deleteTarget.street + '? This cannot be undone.'
+            : ''
+        }
         onConfirm={handleDeleteAddress}
         onClose={() => setDeleteTarget(null)}
       />
-      <Snackbar open={snack !== ''} autoHideDuration={3000} onClose={() => setSnack('')} message={snack} />
+      <Snackbar
+        open={snack !== ''}
+        autoHideDuration={3000}
+        onClose={() => setSnack('')}
+        message={snack}
+      />
     </Box>
   );
 }

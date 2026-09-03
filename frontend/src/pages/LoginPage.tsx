@@ -1,15 +1,7 @@
 import { useState } from 'react';
 import type { FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
-import {
-  Alert,
-  Box,
-  Button,
-  Card,
-  CardContent,
-  TextField,
-  Typography
-} from '@mui/material';
+import { Alert, Box, Button, Card, CardContent, TextField, Typography } from '@mui/material';
 import { useAuth } from '../context/AuthContext';
 
 export default function LoginPage() {

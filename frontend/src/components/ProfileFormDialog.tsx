@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import {
   Alert,
   Box,
@@ -20,7 +20,12 @@ interface ProfileFormDialogProps {
   onSaved: () => void;
 }
 
-export default function ProfileFormDialog({ open, user, onClose, onSaved }: ProfileFormDialogProps) {
+export default function ProfileFormDialog({
+  open,
+  user,
+  onClose,
+  onSaved
+}: ProfileFormDialogProps) {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
@@ -28,7 +33,9 @@ export default function ProfileFormDialog({ open, user, onClose, onSaved }: Prof
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
-  useEffect(() => {
+  const [lastOpen, setLastOpen] = useState<boolean | null>(null);
+  if (open !== lastOpen) {
+    setLastOpen(open);
     if (open) {
       setFirstName(user.firstName);
       setLastName(user.lastName);
@@ -36,7 +43,7 @@ export default function ProfileFormDialog({ open, user, onClose, onSaved }: Prof
       setRole(user.role);
       setError('');
     }
-  }, [open, user]);
+  }
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();

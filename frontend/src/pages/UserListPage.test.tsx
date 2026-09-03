@@ -51,11 +51,19 @@ describe('UserListPage', () => {
     localStorage.setItem('token', 'tok');
     localStorage.setItem(
       'authUser',
-      JSON.stringify({ token: 'tok', userId: 'u2', email: 'admin@example.com', firstName: 'Admin', lastName: 'User' })
+      JSON.stringify({
+        token: 'tok',
+        userId: 'u2',
+        email: 'admin@example.com',
+        firstName: 'Admin',
+        lastName: 'User'
+      })
     );
     fetchMock = vi.fn().mockImplementation((url: string, opts?: RequestInit) => {
       if (url === '/api/users' && (!opts || opts.method === 'GET')) {
-        return Promise.resolve(jsonResponse({ success: true, message: 'ok', data: [alice, admin] }));
+        return Promise.resolve(
+          jsonResponse({ success: true, message: 'ok', data: [alice, admin] })
+        );
       }
       if (url === '/api/auth/register' && opts?.method === 'POST') {
         return Promise.resolve(jsonResponse({ success: true, message: 'created', data: {} }, 201));
@@ -63,7 +71,9 @@ describe('UserListPage', () => {
       if (/\/api\/users\/u1$/.test(url) && opts?.method === 'DELETE') {
         return Promise.resolve({ ok: true, status: 204 });
       }
-      return Promise.resolve(jsonResponse({ success: false, message: 'unexpected', data: null }, 500));
+      return Promise.resolve(
+        jsonResponse({ success: false, message: 'unexpected', data: null }, 500)
+      );
     });
     vi.stubGlobal('fetch', fetchMock);
   });
@@ -142,5 +152,29 @@ describe('UserListPage', () => {
     });
     const refetch = fetchMock.mock.calls.filter(([url]) => url === '/api/users');
     expect(refetch.length).toBeGreaterThanOrEqual(2);
+
+    await user.keyboard('{Escape}');
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+  });
+
+  it('cancelling the delete dialog keeps the user', async () => {
+    const user = userEvent.setup();
+    renderList();
+
+    await screen.findByText('alice@test.com');
+    const rows = await screen.findAllByRole('row');
+    const aliceRow = rows.find((r) => within(r).queryByText('alice@test.com') !== null)!;
+    await user.click(within(aliceRow).getByRole('button', { name: /delete/i }));
+    await user.click(await screen.findByRole('button', { name: /cancel/i }));
+
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+    expect(screen.getByText('alice@test.com')).toBeInTheDocument();
+    expect(fetchMock).not.toHaveBeenCalledWith(
+      '/api/users/u1',
+      expect.objectContaining({ method: 'DELETE' })
+    );
+
+    await user.keyboard('{Escape}');
+    await waitFor(() => expect(screen.queryByRole('alert')).not.toBeInTheDocument());
   });
 });

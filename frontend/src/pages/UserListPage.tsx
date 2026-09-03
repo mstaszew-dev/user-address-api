@@ -43,7 +43,7 @@ export default function UserListPage() {
   }, []);
 
   useEffect(() => {
-    loadUsers();
+    void loadUsers();
   }, [loadUsers]);
 
   async function handleDelete() {
@@ -66,7 +66,12 @@ export default function UserListPage() {
 
   return (
     <Box sx={{ minHeight: '100vh' }}>
-      <AppBar position="static" color="default" elevation={0} sx={{ borderBottom: 1, borderColor: 'divider' }}>
+      <AppBar
+        position="static"
+        color="default"
+        elevation={0}
+        sx={{ borderBottom: 1, borderColor: 'divider' }}
+      >
         <Toolbar>
           <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
             User &amp; Address Management
@@ -136,7 +141,11 @@ export default function UserListPage() {
         title="Delete user"
         message={
           deleteTarget
-            ? 'Delete ' + deleteTarget.firstName + ' ' + deleteTarget.lastName + ' and all their addresses? This cannot be undone.'
+            ? 'Delete ' +
+              deleteTarget.firstName +
+              ' ' +
+              deleteTarget.lastName +
+              ' and all their addresses? This cannot be undone.'
             : ''
         }
         onConfirm={handleDelete}

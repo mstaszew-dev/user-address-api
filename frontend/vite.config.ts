@@ -10,6 +10,17 @@ export default defineConfig({
     setupFiles: './src/test/setup.ts',
     globals: true,
     pool: 'threads',
-    poolOptions: { threads: { execArgv: ['--no-experimental-webstorage'] } }
+    poolOptions: { threads: { execArgv: ['--no-experimental-webstorage'] } },
+    coverage: {
+      provider: 'v8',
+      include: ['src/**/*.{ts,tsx}'],
+      exclude: ['src/test/**', 'src/main.tsx', 'src/vite-env.d.ts'],
+      thresholds: {
+        lines: 95,
+        functions: 95,
+        statements: 95,
+        branches: 90
+      }
+    }
   }
 });
