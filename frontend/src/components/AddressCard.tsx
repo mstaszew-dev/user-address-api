@@ -3,11 +3,12 @@ import type { Address } from '../api/types';
 
 interface AddressCardProps {
   address: Address;
+  canEdit: boolean;
   onEdit: (address: Address) => void;
   onDelete: (address: Address) => void;
 }
 
-export default function AddressCard({ address, onEdit, onDelete }: AddressCardProps) {
+export default function AddressCard({ address, canEdit, onEdit, onDelete }: AddressCardProps) {
   return (
     <Card variant="outlined" sx={{ height: '100%' }} data-testid="address-card">
       <CardContent>
@@ -26,14 +27,16 @@ export default function AddressCard({ address, onEdit, onDelete }: AddressCardPr
           {address.zipCode} {address.country}
         </Typography>
       </CardContent>
-      <CardActions>
-        <Button size="small" onClick={() => onEdit(address)}>
-          Edit
-        </Button>
-        <Button size="small" color="error" onClick={() => onDelete(address)}>
-          Delete
-        </Button>
-      </CardActions>
+      {canEdit && (
+        <CardActions>
+          <Button size="small" onClick={() => onEdit(address)}>
+            Edit
+          </Button>
+          <Button size="small" color="error" onClick={() => onDelete(address)}>
+            Delete
+          </Button>
+        </CardActions>
+      )}
     </Card>
   );
 }

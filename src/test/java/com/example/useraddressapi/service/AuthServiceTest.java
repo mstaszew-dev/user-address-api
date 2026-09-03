@@ -61,6 +61,7 @@ class AuthServiceTest {
         assertEquals("test@test.com", response.email());
         assertEquals("Test", response.firstName());
         assertEquals("User", response.lastName());
+        assertEquals("USER", response.role());
         verify(userRepository).saveIfEmailFree(eq("test@test.com"), any());
     }
 

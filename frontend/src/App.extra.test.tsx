@@ -14,7 +14,8 @@ const session = {
   userId: 'u1',
   email: 'a@b.c',
   firstName: 'A',
-  lastName: 'B'
+  lastName: 'B',
+  role: 'ADMIN'
 };
 
 function seedSession() {

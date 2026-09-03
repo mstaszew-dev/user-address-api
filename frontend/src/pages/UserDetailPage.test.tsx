@@ -36,7 +36,18 @@ function jsonResponse(body: unknown, status = 200) {
   return { ok: status >= 200 && status < 300, status, json: () => Promise.resolve(body) };
 }
 
-function renderDetail() {
+function renderDetail(role = 'ADMIN') {
+  localStorage.setItem(
+    'authUser',
+    JSON.stringify({
+      token: 'tok',
+      userId: 'admin',
+      email: 'admin@example.com',
+      firstName: 'Admin',
+      lastName: 'User',
+      role
+    })
+  );
   return render(
     <MemoryRouter initialEntries={['/users/u1']}>
       <AuthProvider>
@@ -64,7 +75,8 @@ describe('UserDetailPage', () => {
         userId: 'admin',
         email: 'admin@example.com',
         firstName: 'Admin',
-        lastName: 'User'
+        lastName: 'User',
+        role: 'ADMIN'
       })
     );
     store = { profile: { ...user }, addresses: [{ ...homeAddress }, { ...workAddress }] };
@@ -276,5 +288,15 @@ describe('UserDetailPage', () => {
     await screen.findByText('alice@test.com');
     await actor.click(screen.getByRole('button', { name: /all users/i }));
     expect(await screen.findByText('list page')).toBeInTheDocument();
+  });
+
+  it('renders read-only for a non-admin session', async () => {
+    renderDetail('USER');
+
+    await screen.findByText('alice@test.com');
+    await screen.findByText('1 Main St');
+    expect(screen.queryByRole('button', { name: /edit profile/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /add address/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /delete/i })).not.toBeInTheDocument();
   });
 });

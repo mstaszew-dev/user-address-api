@@ -1,8 +1,13 @@
-import { Container, List, ListItem, ListItemText, Paper, Typography } from '@mui/material';
+import { Button, Container, List, ListItem, ListItemText, Paper, Typography } from '@mui/material';
+import { useNavigate } from 'react-router-dom';
 
 export default function AboutPage() {
+  const navigate = useNavigate();
   return (
     <Container maxWidth="md" sx={{ py: 4 }}>
+      <Button onClick={() => navigate('/users')} sx={{ mb: 2 }}>
+        Back to Users
+      </Button>
       <Typography variant="h4" component="h1" gutterBottom>
         About
       </Typography>

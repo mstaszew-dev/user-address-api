@@ -30,7 +30,18 @@ function jsonResponse(body: unknown, status = 200) {
   };
 }
 
-function renderList() {
+function renderList(role = 'ADMIN') {
+  localStorage.setItem(
+    'authUser',
+    JSON.stringify({
+      token: 'tok',
+      userId: 'u2',
+      email: 'admin@example.com',
+      firstName: 'Admin',
+      lastName: 'User',
+      role
+    })
+  );
   return render(
     <MemoryRouter initialEntries={['/users']}>
       <AuthProvider>
@@ -197,5 +208,21 @@ describe('UserListPage', () => {
 
     await user.keyboard('{Escape}');
     await waitFor(() => expect(screen.queryByRole('alert')).not.toBeInTheDocument());
+  });
+
+  it('hides write actions for a non-admin (read-only) session', async () => {
+    renderList('USER');
+
+    await screen.findByText('alice@test.com');
+    expect(screen.queryByRole('button', { name: /add user/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /delete/i })).not.toBeInTheDocument();
+    expect(screen.getAllByRole('link', { name: /manage/i }).length).toBeGreaterThan(0);
+  });
+
+  it('keeps the About link visible for a non-admin session', async () => {
+    renderList('USER');
+
+    await screen.findByText('alice@test.com');
+    expect(screen.getByRole('link', { name: /about/i })).toBeInTheDocument();
   });
 });

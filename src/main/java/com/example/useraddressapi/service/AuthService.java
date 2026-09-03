@@ -43,7 +43,7 @@ public class AuthService {
                 (String) saved.get("id"), request.email(), "USER");
 
         return new AuthResponse(token, (String) saved.get("id"),
-                request.email(), request.firstName(), request.lastName());
+                request.email(), request.firstName(), request.lastName(), "USER");
     }
 
     public AuthResponse login(LoginRequest request) {
@@ -59,6 +59,6 @@ public class AuthService {
 
         return new AuthResponse(token, (String) user.get("id"),
                 (String) user.get("email"), (String) user.get("firstName"),
-                (String) user.get("lastName"));
+                (String) user.get("lastName"), (String) user.get("role"));
     }
 }

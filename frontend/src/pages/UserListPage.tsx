@@ -25,6 +25,7 @@ import UserFormDialog from '../components/UserFormDialog';
 
 export default function UserListPage() {
   const { user, logout } = useAuth();
+  const isAdmin = user?.role === 'ADMIN';
   const navigate = useNavigate();
   const [users, setUsers] = useState<User[]>([]);
   const [error, setError] = useState('');
@@ -90,9 +91,11 @@ export default function UserListPage() {
           <Typography variant="h5" component="h1">
             Users
           </Typography>
-          <Button variant="contained" onClick={() => setAddOpen(true)}>
-            Add User
-          </Button>
+          {isAdmin && (
+            <Button variant="contained" onClick={() => setAddOpen(true)}>
+              Add User
+            </Button>
+          )}
         </Box>
         {error && (
           <Alert severity="error" sx={{ mb: 2 }} data-testid="page-error">
@@ -131,16 +134,18 @@ export default function UserListPage() {
                     >
                       Manage
                     </Button>
-                    <Button
-                      size="small"
-                      color="error"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setDeleteTarget(u);
-                      }}
-                    >
-                      Delete
-                    </Button>
+                    {isAdmin && (
+                      <Button
+                        size="small"
+                        color="error"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setDeleteTarget(u);
+                        }}
+                      >
+                        Delete
+                      </Button>
+                    )}
                   </TableCell>
                 </TableRow>
               ))}

@@ -28,6 +28,7 @@ export default function UserDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user: sessionUser, updateSession } = useAuth();
+  const isAdmin = sessionUser?.role === 'ADMIN';
   const [profile, setProfile] = useState<User | null>(null);
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [error, setError] = useState('');
@@ -133,9 +134,11 @@ export default function UserDetailPage() {
                   label={profile.role}
                   color={profile.role === 'ADMIN' ? 'secondary' : 'default'}
                 />
-                <Button variant="outlined" onClick={() => setProfileEditOpen(true)}>
-                  Edit Profile
-                </Button>
+                {isAdmin && (
+                  <Button variant="outlined" onClick={() => setProfileEditOpen(true)}>
+                    Edit Profile
+                  </Button>
+                )}
               </Box>
             </Paper>
 
@@ -145,9 +148,11 @@ export default function UserDetailPage() {
               <Typography variant="h6" component="h2">
                 Addresses ({addresses.length})
               </Typography>
-              <Button variant="contained" onClick={openAddAddress}>
-                Add Address
-              </Button>
+              {isAdmin && (
+                <Button variant="contained" onClick={openAddAddress}>
+                  Add Address
+                </Button>
+              )}
             </Box>
             {addresses.length === 0 ? (
               <Paper variant="outlined" sx={{ p: 3, textAlign: 'center' }}>
@@ -159,7 +164,12 @@ export default function UserDetailPage() {
               <Grid container spacing={2}>
                 {addresses.map((a) => (
                   <Grid size={{ xs: 12, sm: 6 }} key={a.id}>
-                    <AddressCard address={a} onEdit={openEditAddress} onDelete={setDeleteTarget} />
+                    <AddressCard
+                      address={a}
+                      canEdit={isAdmin}
+                      onEdit={openEditAddress}
+                      onDelete={setDeleteTarget}
+                    />
                   </Grid>
                 ))}
               </Grid>
