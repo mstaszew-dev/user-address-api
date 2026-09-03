@@ -15,7 +15,6 @@ import {
   TableHead,
   TableRow,
   Toolbar,
-  Tooltip,
   Typography
 } from '@mui/material';
 import { apiCall } from '../api/client';
@@ -33,10 +32,13 @@ export default function UserListPage() {
   const [snack, setSnack] = useState('');
   const [addOpen, setAddOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<User | null>(null);
-  const [previews, setPreviews] = useState<Record<string, Address[]>>({});
+  const [previews, setPreviews] = useState<Record<string, Address[] | null>>({});
+  const [hoveredUserId, setHoveredUserId] = useState<string | null>(null);
   const previewFetches = useRef<Set<string>>(new Set());
 
   const loadUsers = useCallback(async () => {
+    previewFetches.current.clear();
+    setPreviews({});
     try {
       const response = await apiCall<User[]>('GET', '/users');
       setUsers(response.data);
@@ -51,6 +53,7 @@ export default function UserListPage() {
   }, [loadUsers]);
 
   async function handleRowHover(u: User) {
+    setHoveredUserId(u.id);
     if (previewFetches.current.has(u.id)) {
       return;
     }
@@ -60,18 +63,30 @@ export default function UserListPage() {
       setPreviews((prev) => ({ ...prev, [u.id]: response.data }));
     } catch {
       previewFetches.current.delete(u.id);
+      setPreviews((prev) => ({ ...prev, [u.id]: null }));
     }
   }
 
-  function previewTitle(u: User) {
+  function previewContent(u: User) {
     const list = previews[u.id];
+    if (list === null) {
+      return <Typography variant="body2">Could not load addresses</Typography>;
+    }
     if (!list) {
-      return 'Loading addresses...';
+      return <Typography variant="body2">Loading addresses...</Typography>;
     }
     if (list.length === 0) {
-      return 'No addresses';
+      return <Typography variant="body2">No addresses</Typography>;
     }
-    return list.map((a) => `${a.street}, ${a.city} (${a.type ?? 'HOME'})`);
+    return (
+      <Box>
+        {list.map((a) => (
+          <Typography key={a.id} variant="body2">
+            {a.street}, {a.city} {a.zipCode} ({a.type ?? 'HOME'})
+          </Typography>
+        ))}
+      </Box>
+    );
   }
 
   async function handleDelete() {
@@ -141,19 +156,37 @@ export default function UserListPage() {
               </TableRow>
             </TableHead>
             <TableBody>
-              {users.map((u) => (
-                <Tooltip key={u.id} title={previewTitle(u)} placement="left" arrow>
+              {users.map((u) => {
+                const isHovered = hoveredUserId === u.id;
+                return (
                   <TableRow
+                    key={u.id}
                     hover
                     onMouseEnter={() => void handleRowHover(u)}
+                    onMouseLeave={() => setHoveredUserId(null)}
+                    onFocus={() => void handleRowHover(u)}
+                    onBlur={() => setHoveredUserId(null)}
                     onClick={() => navigate('/users/' + u.id)}
                     sx={{ cursor: 'pointer' }}
                   >
-                    <TableCell>{u.email}</TableCell>
-                    <TableCell>{u.firstName}</TableCell>
-                    <TableCell>{u.lastName}</TableCell>
-                    <TableCell>{u.role}</TableCell>
-                    <TableCell align="right">
+                    {isHovered ? (
+                      <TableCell
+                        key="main"
+                        colSpan={4}
+                        sx={{ bgcolor: 'action.hover' }}
+                        aria-live="polite"
+                      >
+                        {previewContent(u)}
+                      </TableCell>
+                    ) : (
+                      <>
+                        <TableCell key="email">{u.email}</TableCell>
+                        <TableCell key="firstName">{u.firstName}</TableCell>
+                        <TableCell key="lastName">{u.lastName}</TableCell>
+                        <TableCell key="role">{u.role}</TableCell>
+                      </>
+                    )}
+                    <TableCell key="actions" align="right">
                       <Button
                         size="small"
                         component={Link}
@@ -176,8 +209,8 @@ export default function UserListPage() {
                       )}
                     </TableCell>
                   </TableRow>
-                </Tooltip>
-              ))}
+                );
+              })}
               {users.length === 0 && !error && (
                 <TableRow>
                   <TableCell colSpan={5} align="center">

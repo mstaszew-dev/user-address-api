@@ -1,4 +1,4 @@
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -141,11 +141,12 @@ describe('UserListPage', () => {
   });
 
   it('navigates to the detail page when clicking a user row', async () => {
-    const user = userEvent.setup();
     renderList();
 
     await screen.findByText('alice@test.com');
-    await user.click(screen.getByText('alice@test.com'));
+    const rows = await screen.findAllByRole('row');
+    const aliceRow = rows.find((r) => within(r).queryByText('alice@test.com') !== null)!;
+    fireEvent.click(aliceRow);
 
     expect(await screen.findByText('detail page')).toBeInTheDocument();
   });
@@ -223,6 +224,7 @@ describe('UserListPage', () => {
     await user.click(await screen.findByRole('button', { name: /cancel/i }));
 
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+    fireEvent.mouseLeave(screen.getByText(/1 Main St/i).closest('tr')!);
     expect(screen.getByText('alice@test.com')).toBeInTheDocument();
     expect(fetchMock).not.toHaveBeenCalledWith(
       '/api/users/u1',
@@ -242,7 +244,7 @@ describe('UserListPage', () => {
     expect(screen.getAllByRole('link', { name: /manage/i }).length).toBeGreaterThan(0);
   });
 
-  it('previews addresses when hovering a user row', async () => {
+  it('switches row content to the address preview while hovering', async () => {
     const user = userEvent.setup();
     renderList();
 
@@ -251,8 +253,50 @@ describe('UserListPage', () => {
     const aliceRow = rows.find((r) => within(r).queryByText('alice@test.com') !== null)!;
     await user.hover(aliceRow);
 
-    expect(await screen.findByText(/1 Main St/i)).toBeInTheDocument();
-    expect(screen.getByText(/Tel Aviv/i)).toBeInTheDocument();
+    expect(await within(aliceRow).findByText(/1 Main St/i)).toBeInTheDocument();
+    expect(within(aliceRow).getByText(/Tel Aviv/i)).toBeInTheDocument();
+    expect(within(aliceRow).queryByText('alice@test.com')).not.toBeInTheDocument();
+    expect(within(aliceRow).getByRole('link', { name: /manage/i })).toBeInTheDocument();
+  });
+
+  it('restores the row content on mouse leave', async () => {
+    const user = userEvent.setup();
+    renderList();
+
+    await screen.findByText('alice@test.com');
+    const rows = await screen.findAllByRole('row');
+    const aliceRow = rows.find((r) => within(r).queryByText('alice@test.com') !== null)!;
+    await user.hover(aliceRow);
+    await within(aliceRow).findByText(/1 Main St/i);
+    await user.unhover(aliceRow);
+
+    expect(within(aliceRow).getByText('alice@test.com')).toBeInTheDocument();
+    expect(within(aliceRow).queryByText(/1 Main St/i)).not.toBeInTheDocument();
+  });
+
+  it('shows an error preview and retries on re-hover when the fetch fails', async () => {
+    const baseImpl = fetchMock.getMockImplementation();
+    let previewFails = true;
+    fetchMock.mockImplementation((url: string, opts?: RequestInit) => {
+      if (url === '/api/addresses/user/u1' && previewFails) {
+        return Promise.resolve(jsonResponse({ success: false, message: 'boom', data: null }, 500));
+      }
+      return baseImpl(url, opts);
+    });
+    const user = userEvent.setup();
+    renderList();
+
+    await screen.findByText('alice@test.com');
+    const rows = await screen.findAllByRole('row');
+    const aliceRow = rows.find((r) => within(r).queryByText('alice@test.com') !== null)!;
+    await user.hover(aliceRow);
+
+    expect(await within(aliceRow).findByText(/could not load addresses/i)).toBeInTheDocument();
+
+    await user.unhover(aliceRow);
+    previewFails = false;
+    await user.hover(aliceRow);
+    expect(await within(aliceRow).findByText(/1 Main St/i)).toBeInTheDocument();
   });
 
   it('shows an empty preview for a user without addresses', async () => {
@@ -264,7 +308,7 @@ describe('UserListPage', () => {
     const adminRow = rows.find((r) => within(r).queryByText('admin@example.com') !== null)!;
     await user.hover(adminRow);
 
-    expect(await screen.findByText(/no addresses/i)).toBeInTheDocument();
+    expect(await within(adminRow).findByText(/no addresses/i)).toBeInTheDocument();
   });
 
   it('caches address previews per user', async () => {
