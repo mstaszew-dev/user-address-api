@@ -9,7 +9,6 @@ target/
 node_modules/
 dist/
 coverage/
-src/main/resources/static/js/app.js
 
 # IDE
 .idea/
@@ -25,9 +24,6 @@ src/main/resources/static/js/app.js
 # Logs
 *.log
 
-# Vitest coverage
-coverage/
-
-# Validation screenshots (local evidence)
+# Local evidence screenshots
 *-validation.png
-login-after-logout.png
+*-debug.png
