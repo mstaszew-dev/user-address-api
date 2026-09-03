@@ -18,6 +18,13 @@ public class UserRepository {
         return store.save(TABLE, user);
     }
 
+    public synchronized Optional<Map<String, Object>> saveIfEmailFree(String email, Map<String, Object> user) {
+        if (findByEmail(email).isPresent()) {
+            return Optional.empty();
+        }
+        return Optional.of(store.save(TABLE, user));
+    }
+
     public Optional<Map<String, Object>> findById(String id) {
         return store.findById(TABLE, id);
     }

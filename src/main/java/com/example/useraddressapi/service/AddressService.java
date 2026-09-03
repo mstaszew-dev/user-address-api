@@ -56,16 +56,25 @@ public class AddressService {
                 .orElseThrow(() -> new ResourceNotFoundException("Address", id));
 
         Map<String, Object> updates = new LinkedHashMap<>();
-        if (dto.street() != null) updates.put("street", dto.street());
-        if (dto.city() != null) updates.put("city", dto.city());
-        if (dto.state() != null) updates.put("state", dto.state());
-        if (dto.zipCode() != null) updates.put("zipCode", dto.zipCode());
-        if (dto.country() != null) updates.put("country", dto.country());
-        if (dto.type() != null) updates.put("type", dto.type());
+        putIfPresent(updates, "street", dto.street());
+        putIfPresent(updates, "city", dto.city());
+        putIfPresent(updates, "state", dto.state());
+        putIfPresent(updates, "zipCode", dto.zipCode());
+        putIfPresent(updates, "country", dto.country());
+        putIfPresent(updates, "type", dto.type());
 
         return addressRepository.update(id, updates)
                 .map(this::toDto)
                 .orElseThrow(() -> new ResourceNotFoundException("Address", id));
+    }
+
+    private static void putIfPresent(Map<String, Object> updates, String key, String value) {
+        if (value != null) {
+            if (value.isBlank()) {
+                throw new IllegalArgumentException(key + " must not be blank");
+            }
+            updates.put(key, value);
+        }
     }
 
     public void deleteAddress(String id) {

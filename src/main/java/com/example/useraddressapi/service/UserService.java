@@ -40,17 +40,22 @@ public class UserService {
         Map<String, Object> existing = userRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("User", id));
 
-        if (dto.email() != null && !dto.email().equals(existing.get("email"))) {
-            if (userRepository.findByEmail(dto.email()).isPresent()) {
-                throw new DuplicateResourceException("Email already in use: " + dto.email());
-            }
-        }
-
         Map<String, Object> updates = new LinkedHashMap<>();
         if (dto.firstName() != null) updates.put("firstName", dto.firstName());
         if (dto.lastName() != null) updates.put("lastName", dto.lastName());
         if (dto.email() != null) updates.put("email", dto.email());
         if (dto.role() != null) updates.put("role", dto.role());
+
+        if (dto.email() != null && !dto.email().equals(existing.get("email"))) {
+            synchronized (userRepository) {
+                if (userRepository.findByEmail(dto.email()).isPresent()) {
+                    throw new DuplicateResourceException("Email already in use: " + dto.email());
+                }
+                return userRepository.update(id, updates)
+                        .map(this::toDto)
+                        .orElseThrow(() -> new ResourceNotFoundException("User", id));
+            }
+        }
 
         return userRepository.update(id, updates)
                 .map(this::toDto)

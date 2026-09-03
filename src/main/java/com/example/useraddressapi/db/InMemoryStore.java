@@ -56,12 +56,15 @@ public class InMemoryStore {
 
     public long deleteByField(String tableName, String field, Object value) {
         ConcurrentHashMap<String, Map<String, Object>> t = table(tableName);
-        List<String> toDelete = t.entrySet().stream()
-                .filter(e -> value.equals(e.getValue().get(field)))
-                .map(Map.Entry::getKey)
-                .collect(Collectors.toList());
-        toDelete.forEach(t::remove);
-        return toDelete.size();
+        long[] deleted = { 0 };
+        t.values().removeIf(r -> {
+            if (value.equals(r.get(field))) {
+                deleted[0]++;
+                return true;
+            }
+            return false;
+        });
+        return deleted[0];
     }
 
     public long count(String tableName) {

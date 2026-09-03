@@ -122,7 +122,7 @@ class AddressControllerTest {
     }
 
     @Test
-    void testDeleteAddress_returns200() throws Exception {
+    void testDeleteAddress_returns204() throws Exception {
         String token = registerAndGetToken("user@test.com");
         String userId = getCurrentUserId(token);
 

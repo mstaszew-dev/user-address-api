@@ -220,4 +220,21 @@ class AddressServiceTest {
 
         assertThrows(ResourceNotFoundException.class, () -> addressService.deleteAddress("nonexistent"));
     }
+
+    @Test
+    void testUpdateAddress_rejectsBlankRequiredField() {
+        java.util.Map<String, Object> existing = new java.util.LinkedHashMap<>();
+        existing.put("id", "addr-1");
+        existing.put("userId", "user-1");
+        existing.put("street", "1 Main St");
+        existing.put("city", "Tel Aviv");
+        existing.put("zipCode", "61000");
+        existing.put("country", "IL");
+        when(addressRepository.findById("addr-1")).thenReturn(Optional.of(existing));
+
+        AddressUpdateDto dto = new AddressUpdateDto("  ", null, null, null, null, null);
+
+        assertThrows(IllegalArgumentException.class, () -> addressService.updateAddress("addr-1", dto));
+        verify(addressRepository, never()).update(anyString(), any());
+    }
 }

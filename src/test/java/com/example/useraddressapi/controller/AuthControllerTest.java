@@ -87,11 +87,21 @@ class AuthControllerTest {
     }
 
     @Test
-    void testLogin_returns400OnBadCredentials() throws Exception {
+    void testLogin_returns401OnBadCredentials() throws Exception {
         mockMvc.perform(post("/api/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"email\":\"nobody@test.com\",\"password\":\"wrongpass\"}"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.success").value(false));
+    }
+
+    @Test
+    void testLogin_returns400OnMalformedBody() throws Exception {
+        mockMvc.perform(post("/api/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{not json"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.success").value(false));
     }
+
 }

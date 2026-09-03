@@ -94,7 +94,23 @@ class UserControllerTest {
     }
 
     @Test
-    void testDeleteUser_returns200() throws Exception {
+    void testUpdateUser_returns400OnInvalidRole() throws Exception {
+        String token = registerAndGetToken("alice@test.com");
+        MvcResult result = mockMvc.perform(get("/api/users").header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk())
+                .andReturn();
+        String userId = objectMapper.readTree(result.getResponse().getContentAsString())
+                .path("data").get(0).path("id").asText();
+
+        mockMvc.perform(put("/api/users/" + userId)
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"role\":\"LORD\"}"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void testDeleteUser_returns204() throws Exception {
         String token = registerAndGetToken("alice@test.com");
         MvcResult result = mockMvc.perform(get("/api/users").header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk())

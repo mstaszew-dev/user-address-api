@@ -133,4 +133,30 @@ class UserRepositoryTest {
 
         assertEquals(0, userRepository.count());
     }
+
+    @Test
+    void testSaveIfEmailFree_savesWhenEmailIsNew() {
+        Map<String, Object> user = new HashMap<>();
+        user.put("firstName", "Alice");
+        user.put("lastName", "Smith");
+        user.put("email", "new@test.com");
+
+        Optional<Map<String, Object>> saved = userRepository.saveIfEmailFree("new@test.com", user);
+
+        assertTrue(saved.isPresent());
+        assertEquals("new@test.com", saved.get().get("email"));
+    }
+
+    @Test
+    void testSaveIfEmailFree_returnsEmptyWhenEmailTaken() {
+        userRepository.save(Map.of("email", "taken@test.com", "name", "Existing"));
+
+        Map<String, Object> user = new HashMap<>();
+        user.put("email", "taken@test.com");
+
+        Optional<Map<String, Object>> saved = userRepository.saveIfEmailFree("taken@test.com", user);
+
+        assertTrue(saved.isEmpty());
+        assertEquals(1, userRepository.findAll().size());
+    }
 }
