@@ -6,6 +6,7 @@ import com.example.useraddressapi.dto.UserUpdateDto;
 import com.example.useraddressapi.service.UserService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -36,12 +37,14 @@ public class UserController {
         return ResponseEntity.ok(ApiResponse.ok(userService.getUserById(id)));
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/{id}")
     public ResponseEntity<ApiResponse<UserDto>> updateUser(
             @PathVariable String id, @Valid @RequestBody UserUpdateDto dto) {
         return ResponseEntity.ok(ApiResponse.ok("User updated", userService.updateUser(id, dto)));
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteUser(@PathVariable String id) {
         userService.deleteUser(id);

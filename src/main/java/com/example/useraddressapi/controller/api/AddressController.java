@@ -7,6 +7,7 @@ import com.example.useraddressapi.service.AddressService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -28,6 +29,7 @@ public class AddressController {
         this.addressService = addressService;
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping
     public ResponseEntity<ApiResponse<AddressDto>> createAddress(
             @Valid @RequestBody AddressDto dto) {
@@ -46,6 +48,7 @@ public class AddressController {
         return ResponseEntity.ok(ApiResponse.ok(addressService.getAddressById(id)));
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/{id}")
     public ResponseEntity<ApiResponse<AddressDto>> updateAddress(
             @PathVariable String id, @Valid @RequestBody AddressUpdateDto dto) {
@@ -53,6 +56,7 @@ public class AddressController {
                 addressService.updateAddress(id, dto)));
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteAddress(@PathVariable String id) {
         addressService.deleteAddress(id);

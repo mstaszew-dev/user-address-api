@@ -27,9 +27,34 @@ class AddressControllerTest {
     @Autowired
     private ObjectMapper objectMapper;
 
+    @Autowired
+    private com.example.useraddressapi.db.UserRepository userRepository;
+
+    @Autowired
+    private org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
+
     @BeforeEach
     void setUp() {
         store.clearAll();
+    }
+
+    private String adminGetToken() throws Exception {
+        java.util.Map<String, Object> admin = new java.util.LinkedHashMap<>();
+        admin.put("firstName", "Admin");
+        admin.put("lastName", "User");
+        admin.put("email", "admin@example.com");
+        admin.put("password", passwordEncoder.encode("admin123"));
+        admin.put("role", "ADMIN");
+        admin.put("createdAt", java.time.Instant.now().toString());
+        userRepository.save(admin);
+
+        MvcResult result = mockMvc.perform(post("/api/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"email\":\"admin@example.com\",\"password\":\"admin123\"}"))
+                .andExpect(status().isOk())
+                .andReturn();
+        return objectMapper.readTree(result.getResponse().getContentAsString())
+                .path("data").path("token").asText();
     }
 
     private String registerAndGetToken(String email) throws Exception {
@@ -52,7 +77,7 @@ class AddressControllerTest {
 
     @Test
     void testCreateAddress_returns201() throws Exception {
-        String token = registerAndGetToken("user@test.com");
+        String token = adminGetToken();
         String userId = getCurrentUserId(token);
 
         mockMvc.perform(post("/api/addresses")
@@ -66,10 +91,11 @@ class AddressControllerTest {
     @Test
     void testGetByUserId_returns200WithList() throws Exception {
         String token = registerAndGetToken("user@test.com");
+        String adminToken = adminGetToken();
         String userId = getCurrentUserId(token);
 
         mockMvc.perform(post("/api/addresses")
-                        .header("Authorization", "Bearer " + token)
+                        .header("Authorization", "Bearer " + adminToken)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"userId\":\"" + userId + "\",\"street\":\"123 Main St\",\"city\":\"Springfield\",\"zipCode\":\"62704\",\"country\":\"US\",\"type\":\"HOME\"}"))
                 .andExpect(status().isCreated());
@@ -83,10 +109,11 @@ class AddressControllerTest {
     @Test
     void testGetById_returns200WithAddress() throws Exception {
         String token = registerAndGetToken("user@test.com");
+        String adminToken = adminGetToken();
         String userId = getCurrentUserId(token);
 
         MvcResult created = mockMvc.perform(post("/api/addresses")
-                        .header("Authorization", "Bearer " + token)
+                        .header("Authorization", "Bearer " + adminToken)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"userId\":\"" + userId + "\",\"street\":\"123 Main St\",\"city\":\"Springfield\",\"zipCode\":\"62704\",\"country\":\"US\",\"type\":\"HOME\"}"))
                 .andExpect(status().isCreated())
@@ -101,7 +128,7 @@ class AddressControllerTest {
 
     @Test
     void testUpdateAddress_returns200() throws Exception {
-        String token = registerAndGetToken("user@test.com");
+        String token = adminGetToken();
         String userId = getCurrentUserId(token);
 
         MvcResult created = mockMvc.perform(post("/api/addresses")
@@ -123,7 +150,7 @@ class AddressControllerTest {
 
     @Test
     void testDeleteAddress_returns204() throws Exception {
-        String token = registerAndGetToken("user@test.com");
+        String token = adminGetToken();
         String userId = getCurrentUserId(token);
 
         MvcResult created = mockMvc.perform(post("/api/addresses")
@@ -145,5 +172,56 @@ class AddressControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"userId\":\"u\",\"street\":\"s\",\"city\":\"c\",\"zipCode\":\"z\",\"country\":\"c\"}"))
                 .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void testCreateAddress_returns403ForNonAdminUser() throws Exception {
+        String token = registerAndGetToken("user@test.com");
+
+        mockMvc.perform(post("/api/addresses")
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"userId\":\"u1\",\"street\":\"1 X St\",\"city\":\"Tel Aviv\",\"zipCode\":\"61000\",\"country\":\"IL\"}"))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.success").value(false));
+    }
+
+    @Test
+    void testUpdateAddress_returns403ForNonAdminUser() throws Exception {
+        String adminToken = adminGetToken();
+        String userToken = registerAndGetToken("user@test.com");
+        String userId = getCurrentUserId(userToken);
+        MvcResult created = mockMvc.perform(post("/api/addresses")
+                        .header("Authorization", "Bearer " + adminToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"userId\":\"" + userId + "\",\"street\":\"1 X St\",\"city\":\"Tel Aviv\",\"zipCode\":\"61000\",\"country\":\"IL\"}"))
+                .andExpect(status().isCreated())
+                .andReturn();
+        String addrId = objectMapper.readTree(created.getResponse().getContentAsString())
+                .path("data").path("id").asText();
+
+        mockMvc.perform(put("/api/addresses/" + addrId)
+                        .header("Authorization", "Bearer " + userToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"city\":\"Haifa\"}"))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void testDeleteAddress_returns403ForNonAdminUser() throws Exception {
+        String adminToken = adminGetToken();
+        String userToken = registerAndGetToken("user@test.com");
+        String userId = getCurrentUserId(userToken);
+        MvcResult created = mockMvc.perform(post("/api/addresses")
+                        .header("Authorization", "Bearer " + adminToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"userId\":\"" + userId + "\",\"street\":\"1 X St\",\"city\":\"Tel Aviv\",\"zipCode\":\"61000\",\"country\":\"IL\"}"))
+                .andExpect(status().isCreated())
+                .andReturn();
+        String addrId = objectMapper.readTree(created.getResponse().getContentAsString())
+                .path("data").path("id").asText();
+
+        mockMvc.perform(delete("/api/addresses/" + addrId).header("Authorization", "Bearer " + userToken))
+                .andExpect(status().isForbidden());
     }
 }

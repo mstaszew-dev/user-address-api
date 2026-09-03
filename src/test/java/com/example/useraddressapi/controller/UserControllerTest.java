@@ -1,6 +1,7 @@
 package com.example.useraddressapi.controller;
 
 import com.example.useraddressapi.db.InMemoryStore;
+import com.example.useraddressapi.db.UserRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -25,11 +26,36 @@ class UserControllerTest {
     private InMemoryStore store;
 
     @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
+
+    @Autowired
     private ObjectMapper objectMapper;
 
     @BeforeEach
     void setUp() {
         store.clearAll();
+    }
+
+    private String adminGetToken() throws Exception {
+        java.util.Map<String, Object> admin = new java.util.LinkedHashMap<>();
+        admin.put("firstName", "Admin");
+        admin.put("lastName", "User");
+        admin.put("email", "admin@example.com");
+        admin.put("password", passwordEncoder.encode("admin123"));
+        admin.put("role", "ADMIN");
+        admin.put("createdAt", java.time.Instant.now().toString());
+        userRepository.save(admin);
+
+        MvcResult result = mockMvc.perform(post("/api/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"email\":\"admin@example.com\",\"password\":\"admin123\"}"))
+                .andExpect(status().isOk())
+                .andReturn();
+        return objectMapper.readTree(result.getResponse().getContentAsString())
+                .path("data").path("token").asText();
     }
 
     private String registerAndGetToken(String email) throws Exception {
@@ -84,13 +110,31 @@ class UserControllerTest {
         String userId = objectMapper.readTree(result.getResponse().getContentAsString())
                 .path("data").get(0).path("id").asText();
 
+        String adminToken = adminGetToken();
         mockMvc.perform(put("/api/users/" + userId)
-                        .header("Authorization", "Bearer " + token)
+                        .header("Authorization", "Bearer " + adminToken)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"firstName\":\"Alice\",\"lastName\":\"Updated\",\"email\":\"alice@test.com\"}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.firstName").value("Alice"))
                 .andExpect(jsonPath("$.data.lastName").value("Updated"));
+    }
+
+    @Test
+    void testUpdateUser_returns403ForNonAdminUser() throws Exception {
+        String token = registerAndGetToken("alice@test.com");
+        MvcResult result = mockMvc.perform(get("/api/users").header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk())
+                .andReturn();
+        String userId = objectMapper.readTree(result.getResponse().getContentAsString())
+                .path("data").get(0).path("id").asText();
+
+        mockMvc.perform(put("/api/users/" + userId)
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"lastName\":\"Hacked\"}"))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.success").value(false));
     }
 
     @Test
@@ -118,8 +162,22 @@ class UserControllerTest {
         String userId = objectMapper.readTree(result.getResponse().getContentAsString())
                 .path("data").get(0).path("id").asText();
 
-        mockMvc.perform(delete("/api/users/" + userId).header("Authorization", "Bearer " + token))
+        String adminToken = adminGetToken();
+        mockMvc.perform(delete("/api/users/" + userId).header("Authorization", "Bearer " + adminToken))
                 .andExpect(status().isNoContent());
+    }
+
+    @Test
+    void testDeleteUser_returns403ForNonAdminUser() throws Exception {
+        String token = registerAndGetToken("alice@test.com");
+        MvcResult result = mockMvc.perform(get("/api/users").header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk())
+                .andReturn();
+        String userId = objectMapper.readTree(result.getResponse().getContentAsString())
+                .path("data").get(0).path("id").asText();
+
+        mockMvc.perform(delete("/api/users/" + userId).header("Authorization", "Bearer " + token))
+                .andExpect(status().isForbidden());
     }
 
     @Test
