@@ -68,7 +68,8 @@ describe('UserListPage', () => {
         userId: 'u2',
         email: 'admin@example.com',
         firstName: 'Admin',
-        lastName: 'User'
+        lastName: 'User',
+        role: 'ADMIN'
       })
     );
     fetchMock = vi.fn().mockImplementation((url: string, opts?: RequestInit) => {
@@ -82,6 +83,28 @@ describe('UserListPage', () => {
       }
       if (/\/api\/users\/u1$/.test(url) && opts?.method === 'DELETE') {
         return Promise.resolve({ ok: true, status: 204 });
+      }
+      if (url === '/api/addresses/user/u1' && (!opts || opts.method === 'GET')) {
+        return Promise.resolve(
+          jsonResponse({
+            success: true,
+            message: 'ok',
+            data: [
+              {
+                id: 'a1',
+                userId: 'u1',
+                street: '1 Main St',
+                city: 'Tel Aviv',
+                zipCode: '61000',
+                country: 'IL',
+                type: 'HOME'
+              }
+            ]
+          })
+        );
+      }
+      if (url === '/api/addresses/user/u2' && (!opts || opts.method === 'GET')) {
+        return Promise.resolve(jsonResponse({ success: true, message: 'ok', data: [] }));
       }
       return Promise.resolve(
         jsonResponse({ success: false, message: 'unexpected', data: null }, 500)
@@ -217,6 +240,51 @@ describe('UserListPage', () => {
     expect(screen.queryByRole('button', { name: /add user/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /delete/i })).not.toBeInTheDocument();
     expect(screen.getAllByRole('link', { name: /manage/i }).length).toBeGreaterThan(0);
+  });
+
+  it('previews addresses when hovering a user row', async () => {
+    const user = userEvent.setup();
+    renderList();
+
+    await screen.findByText('alice@test.com');
+    const rows = await screen.findAllByRole('row');
+    const aliceRow = rows.find((r) => within(r).queryByText('alice@test.com') !== null)!;
+    await user.hover(aliceRow);
+
+    expect(await screen.findByText(/1 Main St/i)).toBeInTheDocument();
+    expect(screen.getByText(/Tel Aviv/i)).toBeInTheDocument();
+  });
+
+  it('shows an empty preview for a user without addresses', async () => {
+    const user = userEvent.setup();
+    renderList();
+
+    await screen.findByText('admin@example.com');
+    const rows = await screen.findAllByRole('row');
+    const adminRow = rows.find((r) => within(r).queryByText('admin@example.com') !== null)!;
+    await user.hover(adminRow);
+
+    expect(await screen.findByText(/no addresses/i)).toBeInTheDocument();
+  });
+
+  it('caches address previews per user', async () => {
+    const user = userEvent.setup();
+    renderList();
+
+    await screen.findByText('alice@test.com');
+    const rows = await screen.findAllByRole('row');
+    const aliceRow = rows.find((r) => within(r).queryByText('alice@test.com') !== null)!;
+    const adminRow = rows.find((r) => within(r).queryByText('admin@example.com') !== null)!;
+
+    await user.hover(aliceRow);
+    await screen.findByText(/1 Main St/i);
+    await user.hover(adminRow);
+    await screen.findByText(/no addresses/i);
+    await user.hover(aliceRow);
+    await screen.findByText(/1 Main St/i);
+
+    const previewFetches = fetchMock.mock.calls.filter(([url]) => url === '/api/addresses/user/u1');
+    expect(previewFetches.length).toBe(1);
   });
 
   it('keeps the About link visible for a non-admin session', async () => {

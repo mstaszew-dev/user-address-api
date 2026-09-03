@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
   Alert,
@@ -15,10 +15,11 @@ import {
   TableHead,
   TableRow,
   Toolbar,
+  Tooltip,
   Typography
 } from '@mui/material';
 import { apiCall } from '../api/client';
-import type { User } from '../api/types';
+import type { Address, User } from '../api/types';
 import { useAuth } from '../context/AuthContext';
 import ConfirmDialog from '../components/ConfirmDialog';
 import UserFormDialog from '../components/UserFormDialog';
@@ -32,6 +33,8 @@ export default function UserListPage() {
   const [snack, setSnack] = useState('');
   const [addOpen, setAddOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<User | null>(null);
+  const [previews, setPreviews] = useState<Record<string, Address[]>>({});
+  const previewFetches = useRef<Set<string>>(new Set());
 
   const loadUsers = useCallback(async () => {
     try {
@@ -46,6 +49,30 @@ export default function UserListPage() {
   useEffect(() => {
     void loadUsers();
   }, [loadUsers]);
+
+  async function handleRowHover(u: User) {
+    if (previewFetches.current.has(u.id)) {
+      return;
+    }
+    previewFetches.current.add(u.id);
+    try {
+      const response = await apiCall<Address[]>('GET', '/addresses/user/' + u.id);
+      setPreviews((prev) => ({ ...prev, [u.id]: response.data }));
+    } catch {
+      previewFetches.current.delete(u.id);
+    }
+  }
+
+  function previewTitle(u: User) {
+    const list = previews[u.id];
+    if (!list) {
+      return 'Loading addresses...';
+    }
+    if (list.length === 0) {
+      return 'No addresses';
+    }
+    return list.map((a) => `${a.street}, ${a.city} (${a.type ?? 'HOME'})`);
+  }
 
   async function handleDelete() {
     if (!deleteTarget) return;
@@ -115,39 +142,41 @@ export default function UserListPage() {
             </TableHead>
             <TableBody>
               {users.map((u) => (
-                <TableRow
-                  key={u.id}
-                  hover
-                  onClick={() => navigate('/users/' + u.id)}
-                  sx={{ cursor: 'pointer' }}
-                >
-                  <TableCell>{u.email}</TableCell>
-                  <TableCell>{u.firstName}</TableCell>
-                  <TableCell>{u.lastName}</TableCell>
-                  <TableCell>{u.role}</TableCell>
-                  <TableCell align="right">
-                    <Button
-                      size="small"
-                      component={Link}
-                      to={'/users/' + u.id}
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      Manage
-                    </Button>
-                    {isAdmin && (
+                <Tooltip key={u.id} title={previewTitle(u)} placement="left" arrow>
+                  <TableRow
+                    hover
+                    onMouseEnter={() => void handleRowHover(u)}
+                    onClick={() => navigate('/users/' + u.id)}
+                    sx={{ cursor: 'pointer' }}
+                  >
+                    <TableCell>{u.email}</TableCell>
+                    <TableCell>{u.firstName}</TableCell>
+                    <TableCell>{u.lastName}</TableCell>
+                    <TableCell>{u.role}</TableCell>
+                    <TableCell align="right">
                       <Button
                         size="small"
-                        color="error"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setDeleteTarget(u);
-                        }}
+                        component={Link}
+                        to={'/users/' + u.id}
+                        onClick={(e) => e.stopPropagation()}
                       >
-                        Delete
+                        Manage
                       </Button>
-                    )}
-                  </TableCell>
-                </TableRow>
+                      {isAdmin && (
+                        <Button
+                          size="small"
+                          color="error"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setDeleteTarget(u);
+                          }}
+                        >
+                          Delete
+                        </Button>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                </Tooltip>
               ))}
               {users.length === 0 && !error && (
                 <TableRow>

@@ -52,6 +52,7 @@ Open http://localhost:5173 and sign in with the admin credentials. The Vite dev 
 - User list page: all users with email, first name, last name, and role
 - Add user (via the public register endpoint) and delete user (cascades addresses)
 - User detail page: edit the profile (first name, last name, email, role)
+- Address preview on hover: hovering a user row in the list shows a tooltip with that user's addresses
 - Address management on the same detail page: add, edit, and delete addresses per user
 - Guarded routes: unauthenticated visitors are redirected to the login page
 
