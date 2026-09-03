@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import {
   Alert,
   Avatar,
@@ -103,8 +103,11 @@ export default function UserDetailPage() {
   return (
     <Box sx={{ minHeight: '100vh' }}>
       <Container maxWidth="md" sx={{ py: 4 }}>
-        <Button onClick={() => navigate('/users')} sx={{ mb: 2 }}>
+        <Button onClick={() => navigate('/users')} sx={{ mb: 2, mr: 1 }}>
           All users
+        </Button>
+        <Button component={Link} to="/about" sx={{ mb: 2 }}>
+          About
         </Button>
         {error && (
           <Alert severity="error" sx={{ mb: 2 }} data-testid="page-error">

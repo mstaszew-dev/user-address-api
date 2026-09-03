@@ -43,6 +43,7 @@ function renderDetail() {
         <Routes>
           <Route path="/users/:id" element={<UserDetailPage />} />
           <Route path="/users" element={<div>list page</div>} />
+          <Route path="/about" element={<div>about page</div>} />
         </Routes>
       </AuthProvider>
     </MemoryRouter>
@@ -257,6 +258,15 @@ describe('UserDetailPage', () => {
     expect(screen.getByText('1 Main St')).toBeInTheDocument();
     await actor.keyboard('{Escape}');
     await waitFor(() => expect(screen.queryByRole('alert')).not.toBeInTheDocument());
+  });
+
+  it('links to the About page', async () => {
+    const actor = userEvent.setup();
+    renderDetail();
+
+    await screen.findByText('alice@test.com');
+    await actor.click(screen.getByRole('link', { name: /about/i }));
+    expect(await screen.findByText('about page')).toBeInTheDocument();
   });
 
   it('navigates back to the list via back action', async () => {

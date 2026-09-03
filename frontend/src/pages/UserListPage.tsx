@@ -79,6 +79,9 @@ export default function UserListPage() {
           <Typography variant="body2" sx={{ mr: 2 }} data-testid="nav-user-name">
             {user ? user.firstName + ' ' + user.lastName : ''}
           </Typography>
+          <Button component={Link} to="/about">
+            About
+          </Button>
           <Button onClick={handleLogout}>Sign out</Button>
         </Toolbar>
       </AppBar>
@@ -109,16 +112,33 @@ export default function UserListPage() {
             </TableHead>
             <TableBody>
               {users.map((u) => (
-                <TableRow key={u.id} hover>
+                <TableRow
+                  key={u.id}
+                  hover
+                  onClick={() => navigate('/users/' + u.id)}
+                  sx={{ cursor: 'pointer' }}
+                >
                   <TableCell>{u.email}</TableCell>
                   <TableCell>{u.firstName}</TableCell>
                   <TableCell>{u.lastName}</TableCell>
                   <TableCell>{u.role}</TableCell>
                   <TableCell align="right">
-                    <Button size="small" component={Link} to={'/users/' + u.id}>
+                    <Button
+                      size="small"
+                      component={Link}
+                      to={'/users/' + u.id}
+                      onClick={(e) => e.stopPropagation()}
+                    >
                       Manage
                     </Button>
-                    <Button size="small" color="error" onClick={() => setDeleteTarget(u)}>
+                    <Button
+                      size="small"
+                      color="error"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setDeleteTarget(u);
+                      }}
+                    >
                       Delete
                     </Button>
                   </TableCell>

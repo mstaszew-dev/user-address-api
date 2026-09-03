@@ -38,6 +38,7 @@ function renderList() {
           <Route path="/users" element={<UserListPage />} />
           <Route path="/users/:id" element={<div>detail page</div>} />
           <Route path="/login" element={<div>login page</div>} />
+          <Route path="/about" element={<div>about page</div>} />
         </Routes>
       </AuthProvider>
     </MemoryRouter>
@@ -103,6 +104,26 @@ describe('UserListPage', () => {
     await user.click(within(aliceRow).getByRole('link', { name: /manage/i }));
 
     expect(await screen.findByText('detail page')).toBeInTheDocument();
+  });
+
+  it('navigates to the detail page when clicking a user row', async () => {
+    const user = userEvent.setup();
+    renderList();
+
+    await screen.findByText('alice@test.com');
+    await user.click(screen.getByText('alice@test.com'));
+
+    expect(await screen.findByText('detail page')).toBeInTheDocument();
+  });
+
+  it('links to the About page from the app bar', async () => {
+    const user = userEvent.setup();
+    renderList();
+
+    await screen.findByText('alice@test.com');
+    await user.click(screen.getByRole('link', { name: /about/i }));
+
+    expect(await screen.findByText('about page')).toBeInTheDocument();
   });
 
   it('adds a user through the Add User dialog', async () => {
