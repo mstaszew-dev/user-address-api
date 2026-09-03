@@ -49,7 +49,7 @@ export default function AboutPage() {
           <ListItem>
             <ListItemText
               primary="Authorization"
-              secondary="JWT login with an intentional admin-flat model: any authenticated user can manage users and addresses."
+              secondary="JWT login with an intentional admin-flat model: any authenticated user can manage users and addresses. Expired sessions are detected centrally and the user is returned to the login flow."
             />
           </ListItem>
           <ListItem>

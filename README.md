@@ -65,7 +65,8 @@ Open http://localhost:5173 and sign in with the admin credentials. The Vite dev 
 - All create/edit flows use MUI dialogs, so the user never loses page context.
 - State management uses React hooks only (`useState`, `useEffect`, plus a small auth
   `Context`). Data is refetched after every mutation, which keeps the UI trivially consistent
-  with the server.
+  with the server. Expired sessions are handled centrally: any 401 from the API clears the
+  session and returns the user to the login page.
 - Navigation is two-way: the detail page has a back action, and the app bar keeps global
   context (signed-in user, sign out).
 
