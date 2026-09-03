@@ -106,4 +106,31 @@ class UserRepositoryTest {
 
         assertEquals(2, userRepository.count());
     }
+
+    @Test
+    void testFindByEmail_returnsEmptyForDuplicatedUsersListEmpty() {
+        assertFalse(userRepository.findByEmail("missing@test.com").isPresent());
+    }
+
+    @Test
+    void testUpdate_returnsEmptyForMissingId() {
+        Optional<Map<String, Object>> updated = userRepository.update("missing", Map.of("name", "X"));
+
+        assertFalse(updated.isPresent());
+    }
+
+    @Test
+    void testDelete_returnsFalseForMissingId() {
+        assertFalse(userRepository.delete("missing"));
+    }
+
+    @Test
+    void testClear_removesAllUsers() {
+        userRepository.save(Map.of("name", "Alice", "email", "a@test.com"));
+        userRepository.save(Map.of("name", "Bob", "email", "b@test.com"));
+
+        userRepository.clear();
+
+        assertEquals(0, userRepository.count());
+    }
 }

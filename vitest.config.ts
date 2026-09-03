@@ -8,13 +8,12 @@ export default defineConfig({
         coverage: {
             provider: 'v8',
             include: ['src/main/resources/static/ts/**/*.ts'],
-            exclude: ['src/main/resources/static/ts/types.ts'],
             reporter: ['text', 'html'],
             thresholds: {
-                lines: 90,
-                functions: 90,
-                statements: 90,
-                branches: 80
+                lines: 95,
+                functions: 95,
+                statements: 95,
+                branches: 90
             }
         }
     }

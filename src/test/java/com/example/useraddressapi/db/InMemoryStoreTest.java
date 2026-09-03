@@ -41,6 +41,17 @@ class InMemoryStoreTest {
     }
 
     @Test
+    void testSave_generatesIdWhenProvidedIdIsNull() {
+        Map<String, Object> record = new LinkedHashMap<>();
+        record.put("id", null);
+        record.put("name", "Carol");
+
+        Map<String, Object> saved = store.save("users", record);
+
+        assertNotNull(saved.get("id"));
+    }
+
+    @Test
     void testFindById_returnsRecord() {
         Map<String, Object> record = new LinkedHashMap<>();
         record.put("name", "Alice");

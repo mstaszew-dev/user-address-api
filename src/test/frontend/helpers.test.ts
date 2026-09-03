@@ -96,7 +96,23 @@ describe('helpers', () => {
             expect(tr.innerHTML).toContain('a@b.com');
             expect(tr.innerHTML).toContain('USER');
             expect(tr.innerHTML).toContain('2024-01-01');
-            expect(tr.querySelector('button')).not.toBeNull();
+            const button = tr.querySelector('button');
+            expect(button).not.toBeNull();
+            expect(button?.getAttribute('data-delete-user')).toBe('u1');
+            expect(button?.textContent).toBe('Delete');
+        });
+
+        it('does not interpolate the id into an inline onclick handler (XSS-safe)', () => {
+            const malicious = "u1');alert(1);//";
+            const tr = buildUserRow(
+                { id: malicious, name: 'A', email: 'a@b.com', role: 'USER', createdAt: 'd' },
+                malicious
+            );
+            expect(tr.querySelector('button[onclick]')).toBeNull();
+            expect(tr.innerHTML).not.toMatch(/onclick=/);
+            const button = tr.querySelector('button');
+            expect(button?.getAttribute('data-delete-user')).toBe(malicious);
+            expect(button?.hasAttribute('onclick')).toBe(false);
         });
     });
 });

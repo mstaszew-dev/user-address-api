@@ -32,11 +32,16 @@ export function buildUserRow(user: UserDto, id: string): HTMLTableRowElement {
         '</td>' +
         '<td class="px-4 py-3 text-slate-400">' +
         escapeHtml(user.createdAt || '') +
-        '</td>' +
-        '<td class="px-4 py-3"><button onclick="window.deleteUser(\'' +
-        escapeHtml(id) +
-        '\')" ' +
-        'class="text-xs text-red-400 hover:text-red-300 border border-red-500/30 rounded px-2 py-1">Delete</button></td>';
+        '</td>';
+    const actionCell = document.createElement('td');
+    actionCell.className = 'px-4 py-3';
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'text-xs text-red-400 hover:text-red-300 border border-red-500/30 rounded px-2 py-1';
+    button.textContent = 'Delete';
+    button.setAttribute('data-delete-user', id);
+    actionCell.appendChild(button);
+    tr.appendChild(actionCell);
     return tr;
 }
 

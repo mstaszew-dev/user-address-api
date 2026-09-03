@@ -41,14 +41,13 @@ public class InMemoryStore {
 
     public Optional<Map<String, Object>> update(String tableName, String id,
                                                   Map<String, Object> updates) {
-        return findById(tableName, id).map(existing -> {
+        return Optional.ofNullable(table(tableName).computeIfPresent(id, (key, existing) -> {
             Map<String, Object> updated = new LinkedHashMap<>(existing);
             updates.forEach((k, v) -> {
                 if (!"id".equals(k)) updated.put(k, v);
             });
-            table(tableName).put(id, updated);
             return updated;
-        });
+        }));
     }
 
     public boolean delete(String tableName, String id) {

@@ -109,5 +109,18 @@ describe('api', () => {
             const [, options] = fetchMock.mock.calls[0];
             expect(options.body).toBeUndefined();
         });
+
+        it('handles unexpected non-JSON response', async () => {
+            const fetchMock = vi.fn().mockResolvedValue({
+                ok: false,
+                status: 502,
+                json: async () => {
+                    throw new Error('not json');
+                }
+            });
+            vi.stubGlobal('fetch', fetchMock);
+
+            await expect(apiCall('GET', '/api/users')).rejects.toThrow('Unexpected response');
+        });
     });
 });

@@ -150,6 +150,17 @@ async function deleteUser(id: string): Promise<void> {
     }
 }
 
+function initDeleteDelegation(): void {
+    const tbody = document.getElementById('users-table-body');
+    if (!tbody) return;
+    tbody.addEventListener('click', (e) => {
+        const button = (e.target as Element | null)?.closest<HTMLButtonElement>('button[data-delete-user]');
+        if (!button) return;
+        const id = button.getAttribute('data-delete-user');
+        if (id) void deleteUser(id);
+    });
+}
+
 declare global {
     interface Window {
         doLogin: typeof doLogin;
@@ -190,6 +201,7 @@ document.addEventListener('DOMContentLoaded', () => {
         } else if (path === '/dashboard') {
             void loadDashboard();
         } else if (path === '/users') {
+            initDeleteDelegation();
             void loadUsers();
         } else if (path === '/about') {
             guardPage();

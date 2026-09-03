@@ -15,9 +15,8 @@ coverage across the Java backend and TypeScript frontend.
 
 ## Features
 
-- JWT sign-up / login with role-based auth (ADMIN, USER)
-- CRUD for users and self-scoped plus admin-scoped address management
-- Cascade deletion of a user's addresses
+- JWT sign-up / login with two roles (ADMIN, USER)
+- CRUD for users and their addresses (cascade deletion)
 - Centralized exception handling and DTO validation
 - Web dashboard: login, user management, and stats pages
 - Seed admin account created on startup
@@ -63,11 +62,35 @@ All endpoints return JSON wrapped in an `ApiResponse`.
 | PUT    | `/api/users/{id}`           | Bearer | Update a user (partial)         |
 | DELETE | `/api/users/{id}`           | Bearer | Delete a user (cascades addrs)  |
 | GET    | `/api/addresses/user/{id}`  | Bearer | List a user's addresses         |
-| POST   | `/api/addresses/user/{id}`  | Bearer | Create an address               |
+| POST   | `/api/addresses`            | Bearer | Create an address for a user    |
 | PUT    | `/api/addresses/{id}`       | Bearer | Update an address (partial)     |
 | DELETE | `/api/addresses/{id}`       | Bearer | Delete an address               |
 
 Authenticate by sending `Authorization: Bearer <token>`.
+
+### Authorization model (intentional design)
+
+This sample is built as a **single-dashboard admin tool**: the routes require a valid JWT, but every
+authenticated user is treated as an administrator who can manage all users and all addresses
+(`PUT`/`DELETE` on any user or address, and address creation against any `userId`). There is no
+per-user ownership isolation (no tenant/IDOR guard) by design, to keep the demo simple. If this were
+a multi-tenant product you would derive the acting user's id from the JWT and enforce
+ownership/role checks in the service layer.
+
+## Configuration
+
+Environment variables (optional, dev defaults provided):
+
+| Variable         | Default | Description                                  |
+|------------------|---------|----------------------------------------------|
+| `APP_JWT_SECRET` | (placeholder HS256 key) | JWT signing secret; **must** be overridden with a strong random value in any real deployment. |
+| `ADMIN_PASSWORD` | `admin123` | Password for the seeded `admin@example.com` account. |
+
+Example:
+
+```bash
+APP_JWT_SECRET="$(openssl rand -base64 48)" ADMIN_PASSWORD="<strong-password>" mvn spring-boot:run
+```
 
 ## Tests
 

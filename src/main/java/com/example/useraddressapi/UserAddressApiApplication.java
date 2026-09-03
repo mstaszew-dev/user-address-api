@@ -25,12 +25,17 @@ public class UserAddressApiApplication {
                 Map<String, Object> admin = new LinkedHashMap<>();
                 admin.put("name", "Admin");
                 admin.put("email", "admin@example.com");
-                admin.put("password", encoder.encode("admin123"));
+                admin.put("password", encoder.encode(adminPassword()));
                 admin.put("role", "ADMIN");
                 admin.put("createdAt", Instant.now().toString());
                 userRepository.save(admin);
-                System.out.println(">> Seeded admin user: admin@example.com / admin123");
+                System.out.println(">> Seeded admin user: admin@example.com");
             }
         };
+    }
+
+    private static String adminPassword() {
+        String password = System.getenv("ADMIN_PASSWORD");
+        return (password == null || password.isBlank()) ? "admin123" : password;
     }
 }

@@ -17,6 +17,7 @@ import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -85,6 +86,53 @@ class UserServiceTest {
 
         assertEquals("Bob", result.name());
         assertEquals("new@test.com", result.email());
+    }
+
+    @Test
+    void testUpdateUser_updatesRoleOnly() {
+        when(userRepository.findById("user-1")).thenReturn(Optional.of(sampleUser));
+
+        Map<String, Object> updated = new LinkedHashMap<>(sampleUser);
+        updated.put("role", "ADMIN");
+        when(userRepository.update(eq("user-1"), any())).thenReturn(Optional.of(updated));
+
+        UserUpdateDto dto = new UserUpdateDto(null, null, "ADMIN");
+        UserDto result = userService.updateUser("user-1", dto);
+
+        assertEquals("ADMIN", result.role());
+    }
+
+    @Test
+    void testUpdateUser_emailSameAsExisting_skipsDuplicateCheck() {
+        when(userRepository.findById("user-1")).thenReturn(Optional.of(sampleUser));
+
+        Map<String, Object> updated = new LinkedHashMap<>(sampleUser);
+        when(userRepository.update(eq("user-1"), any())).thenReturn(Optional.of(updated));
+
+        UserUpdateDto dto = new UserUpdateDto("Alice", "alice@test.com", null);
+        UserDto result = userService.updateUser("user-1", dto);
+
+        assertEquals("alice@test.com", result.email());
+        verify(userRepository, never()).findByEmail(anyString());
+    }
+
+    @Test
+    void testUpdateUser_throwsWhenUpdateReturnsEmpty() {
+        when(userRepository.findById("user-1")).thenReturn(Optional.of(sampleUser));
+        when(userRepository.update(eq("user-1"), any())).thenReturn(Optional.empty());
+
+        UserUpdateDto dto = new UserUpdateDto("Bob", null, null);
+
+        assertThrows(ResourceNotFoundException.class, () -> userService.updateUser("user-1", dto));
+    }
+
+    @Test
+    void testUpdateUser_throwsWhenUserNotFound() {
+        when(userRepository.findById("missing")).thenReturn(Optional.empty());
+
+        UserUpdateDto dto = new UserUpdateDto("Bob", null, null);
+
+        assertThrows(ResourceNotFoundException.class, () -> userService.updateUser("missing", dto));
     }
 
     @Test

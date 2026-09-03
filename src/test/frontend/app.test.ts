@@ -109,6 +109,18 @@ describe('app (DOM handlers)', () => {
         expect(fetchMock).not.toHaveBeenCalled();
     });
 
+    it('createUser shows form error when API fails', async () => {
+        setToken('t');
+        mockFetchOnce(409, { success: false, message: 'Email already registered', data: null });
+        (document.getElementById('new-user-name') as HTMLInputElement).value = 'Alice';
+        (document.getElementById('new-user-email') as HTMLInputElement).value = 'a@b.com';
+        (document.getElementById('new-user-password') as HTMLInputElement).value = 'password1';
+        await window.createUser();
+        const box = document.getElementById('form-error') as HTMLElement;
+        expect(box.textContent).toContain('Email already registered');
+        expect(box.classList.contains('hidden')).toBe(false);
+    });
+
     it('deleteUser confirms then calls delete API', async () => {
         setToken('t');
         vi.spyOn(window, 'confirm').mockReturnValue(true);
@@ -117,6 +129,25 @@ describe('app (DOM handlers)', () => {
         await window.deleteUser('u1');
         const calls = (globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls;
         expect(calls.some((c) => c[0] === '/api/users/u1')).toBe(true);
+    });
+
+    it('deleteUser shows error when API fails', async () => {
+        setToken('t');
+        vi.spyOn(window, 'confirm').mockReturnValue(true);
+        mockFetchOnce(500, { success: false, message: 'delete failed', data: null });
+        await window.deleteUser('u1');
+        const box = document.getElementById('error-box') as HTMLElement;
+        expect(box.textContent).toContain('delete failed');
+        expect(box.classList.contains('hidden')).toBe(false);
+    });
+
+    it('deleteUser aborts when not confirmed', async () => {
+        setToken('t');
+        vi.spyOn(window, 'confirm').mockReturnValue(false);
+        const fetchMock = vi.fn();
+        vi.stubGlobal('fetch', fetchMock);
+        await window.deleteUser('u1');
+        expect(fetchMock).not.toHaveBeenCalled();
     });
 
     it('guardPage returns false and navigates to login when unauthenticated', () => {
@@ -190,6 +221,15 @@ describe('app (DOM handlers)', () => {
         expect((document.getElementById('total-addresses') as HTMLElement).textContent).toBe('1');
     });
 
+    it('loadDashboard shows error on API failure', async () => {
+        setToken('t');
+        mockFetchOnce(500, { success: false, message: 'dashboard failed', data: null });
+        locHref = 'http://localhost/dashboard';
+        await window.loadDashboard();
+        const box = document.getElementById('error-box') as HTMLElement;
+        expect(box.textContent).toContain('dashboard failed');
+    });
+
     it('showUserForm and hideUserForm toggle the modal', () => {
         setToken('t');
         window.showUserForm();
@@ -242,6 +282,97 @@ describe('app (DOM handlers)', () => {
             await flush();
             const urls = fetchMock.mock.calls.map((c) => c[0]);
             expect(urls).toContain('/api/users');
+            vi.restoreAllMocks();
+        });
+
+        it('delegates delete clicks on user rows to deleteUser', async () => {
+            setToken('t');
+            locHref = 'http://localhost/users';
+            vi.spyOn(window, 'confirm').mockReturnValue(true);
+            const fetchMock = vi
+                .fn()
+                .mockResolvedValueOnce({
+                    ok: true,
+                    status: 200,
+                    json: async () => ({ success: true, message: 'deleted', data: null })
+                })
+                .mockResolvedValueOnce({
+                    ok: true,
+                    status: 200,
+                    json: async () => ({ success: true, message: 'ok', data: [] })
+                });
+            vi.stubGlobal('fetch', fetchMock);
+            document.dispatchEvent(new Event('DOMContentLoaded'));
+            await flush();
+            const tbody = document.getElementById('users-table-body') as HTMLElement;
+            const btn = document.createElement('button');
+            btn.setAttribute('data-delete-user', 'u1');
+            tbody.appendChild(btn);
+            btn.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+            await flush();
+            const urls = fetchMock.mock.calls.map((c) => c[0]);
+            expect(urls).toContain('/api/users/u1');
+            vi.restoreAllMocks();
+        });
+
+        it('delegation ignores clicks not on a delete button', async () => {
+            setToken('t');
+            locHref = 'http://localhost/users';
+            const fetchMock = vi.fn().mockResolvedValue({
+                ok: true,
+                json: async () => ({ success: true, message: 'ok', data: [] })
+            });
+            vi.stubGlobal('fetch', fetchMock);
+            document.dispatchEvent(new Event('DOMContentLoaded'));
+            await flush();
+            const tbody = document.getElementById('users-table-body') as HTMLElement;
+            tbody.appendChild(document.createElement('td'));
+            const btnNoData = document.createElement('button');
+            tbody.appendChild(btnNoData);
+            tbody.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+            btnNoData.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+            await flush();
+            const urls = fetchMock.mock.calls.map((c) => c[0]);
+            expect(urls.filter((u) => u.startsWith('/api/users/')).length).toBe(0);
+            vi.restoreAllMocks();
+        });
+
+        it('delegation is safe when the users table is absent', async () => {
+            setToken('t');
+            locHref = 'http://localhost/users';
+            document.body.innerHTML = '';
+            const fetchMock = vi.fn().mockResolvedValue({
+                ok: true,
+                json: async () => ({ success: true, message: 'ok', data: [] })
+            });
+            vi.stubGlobal('fetch', fetchMock);
+            document.dispatchEvent(new Event('DOMContentLoaded'));
+            await flush();
+            expect(document.getElementById('users-table-body')).toBeNull();
+            vi.restoreAllMocks();
+        });
+
+        it('loads dashboard on /dashboard page', async () => {
+            setToken('t');
+            locHref = 'http://localhost/dashboard';
+            const fetchMock = vi.fn().mockResolvedValue({
+                ok: true,
+                json: async () => ({ success: true, message: 'ok', data: [] })
+            });
+            vi.stubGlobal('fetch', fetchMock);
+            document.dispatchEvent(new Event('DOMContentLoaded'));
+            await flush();
+            const urls = fetchMock.mock.calls.map((c) => c[0]);
+            expect(urls).toContain('/api/users');
+            vi.restoreAllMocks();
+        });
+
+        it('guards the /about page', async () => {
+            setToken('t');
+            locHref = 'http://localhost/about';
+            document.dispatchEvent(new Event('DOMContentLoaded'));
+            await flush();
+            expect(isAuthenticated()).toBe(true);
             vi.restoreAllMocks();
         });
     });

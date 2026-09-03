@@ -3,7 +3,7 @@ server:
 
 app:
   jwt:
-    secret: "YourBase64EncodedSecretKeyAtLeast256BitsLongForHS256Algorithm1234567890"
+    secret: "${APP_JWT_SECRET:YourBase64EncodedSecretKeyAtLeast256BitsLongForHS256Algorithm1234567890}"
     expiration-ms: 86400000  # 24 hours
 
 spring:

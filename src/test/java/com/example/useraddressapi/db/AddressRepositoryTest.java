@@ -109,4 +109,26 @@ class AddressRepositoryTest {
         assertEquals(2, deleted);
         assertEquals(1, addressRepository.findAll().size());
     }
+
+    @Test
+    void testUpdate_returnsEmptyForMissingId() {
+        Optional<Map<String, Object>> updated = addressRepository.update("missing", Map.of("city", "X"));
+
+        assertFalse(updated.isPresent());
+    }
+
+    @Test
+    void testDelete_returnsFalseForMissingId() {
+        assertFalse(addressRepository.delete("missing"));
+    }
+
+    @Test
+    void testClear_removesAllAddresses() {
+        addressRepository.save(Map.of("userId", "user-1", "street", "123 Main St"));
+        addressRepository.save(Map.of("userId", "user-2", "street", "789 Pine Rd"));
+
+        addressRepository.clear();
+
+        assertEquals(0, addressRepository.findAll().size());
+    }
 }

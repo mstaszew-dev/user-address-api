@@ -54,8 +54,8 @@ public class AddressController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<ApiResponse<Void>> deleteAddress(@PathVariable String id) {
+    public ResponseEntity<Void> deleteAddress(@PathVariable String id) {
         addressService.deleteAddress(id);
-        return ResponseEntity.ok(ApiResponse.ok("Address deleted", null));
+        return ResponseEntity.noContent().build();
     }
 }

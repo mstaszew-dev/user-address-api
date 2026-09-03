@@ -126,6 +126,86 @@ class AddressServiceTest {
     }
 
     @Test
+    void testCreateAddress_defaultsTypeToHomeWhenNull() {
+        when(userRepository.findById("user-1")).thenReturn(Optional.of(Map.of("id", "user-1")));
+        when(addressRepository.save(any())).thenAnswer(inv -> {
+            Map<String, Object> addr = new LinkedHashMap<>(inv.getArgument(0));
+            addr.put("id", "addr-2");
+            return addr;
+        });
+
+        AddressDto dto = new AddressDto(null, "user-1", "789 Pine Rd", "Springfield", null, "62704", "US", null);
+        AddressDto result = addressService.createAddress(dto);
+
+        assertEquals("HOME", result.type());
+    }
+
+    @Test
+    void testUpdateAddress_updatesMultipleFields() {
+        Map<String, Object> existing = new LinkedHashMap<>();
+        existing.put("id", "addr-1");
+        existing.put("userId", "user-1");
+        existing.put("street", "123 Main St");
+
+        when(addressRepository.findById("addr-1")).thenReturn(Optional.of(existing));
+
+        Map<String, Object> updated = new LinkedHashMap<>(existing);
+        updated.put("street", "456 Oak Ave");
+        updated.put("city", "Springfield");
+        updated.put("state", "IL");
+        updated.put("zipCode", "62704");
+        updated.put("country", "US");
+        updated.put("type", "WORK");
+        when(addressRepository.update(eq("addr-1"), any())).thenReturn(Optional.of(updated));
+
+        AddressUpdateDto dto = new AddressUpdateDto("456 Oak Ave", "Springfield", "IL", "62704", "US", "WORK");
+        AddressDto result = addressService.updateAddress("addr-1", dto);
+
+        assertEquals("456 Oak Ave", result.street());
+        assertEquals("WORK", result.type());
+    }
+
+    @Test
+    void testUpdateAddress_throwsWhenAddressNotFound() {
+        when(addressRepository.findById("missing")).thenReturn(Optional.empty());
+
+        AddressUpdateDto dto = new AddressUpdateDto("456 Oak Ave", null, null, null, null, null);
+
+        assertThrows(ResourceNotFoundException.class, () -> addressService.updateAddress("missing", dto));
+    }
+
+    @Test
+    void testUpdateAddress_throwsWhenUpdateReturnsEmpty() {
+        Map<String, Object> existing = new LinkedHashMap<>();
+        existing.put("id", "addr-1");
+        existing.put("userId", "user-1");
+
+        when(addressRepository.findById("addr-1")).thenReturn(Optional.of(existing));
+        when(addressRepository.update(eq("addr-1"), any())).thenReturn(Optional.empty());
+
+        AddressUpdateDto dto = new AddressUpdateDto("456 Oak Ave", null, null, null, null, null);
+
+        assertThrows(ResourceNotFoundException.class, () -> addressService.updateAddress("addr-1", dto));
+    }
+
+    @Test
+    void testUpdateAddress_allFieldsNull_buildsEmptyUpdateMap() {
+        Map<String, Object> existing = new LinkedHashMap<>();
+        existing.put("id", "addr-1");
+        existing.put("userId", "user-1");
+        existing.put("street", "123 Main St");
+
+        when(addressRepository.findById("addr-1")).thenReturn(Optional.of(existing));
+        Map<String, Object> updated = new LinkedHashMap<>(existing);
+        when(addressRepository.update(eq("addr-1"), any())).thenReturn(Optional.of(updated));
+
+        AddressUpdateDto dto = new AddressUpdateDto(null, null, null, null, null, null);
+        AddressDto result = addressService.updateAddress("addr-1", dto);
+
+        assertEquals("123 Main St", result.street());
+    }
+
+    @Test
     void testDeleteAddress_removesRecord() {
         when(addressRepository.delete("addr-1")).thenReturn(true);
 

@@ -27,3 +27,7 @@ src/main/resources/static/js/app.js
 
 # Vitest coverage
 coverage/
+
+# Validation screenshots (local evidence)
+*-validation.png
+login-after-logout.png

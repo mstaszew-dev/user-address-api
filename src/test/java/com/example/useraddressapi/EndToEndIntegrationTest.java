@@ -85,7 +85,7 @@ class EndToEndIntegrationTest {
         // 6. Delete address
         mockMvc.perform(delete("/api/addresses/" + addrId)
                         .header("Authorization", "Bearer " + loginToken))
-                .andExpect(status().isOk());
+                .andExpect(status().isNoContent());
 
         // Re-create an address to verify cascade delete with user deletion
         MvcResult created2 = mockMvc.perform(post("/api/addresses")
@@ -100,8 +100,7 @@ class EndToEndIntegrationTest {
         // 7. Delete user -> cascades address deletion
         mockMvc.perform(delete("/api/users/" + userId)
                         .header("Authorization", "Bearer " + loginToken))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(true));
+                .andExpect(status().isNoContent());
 
         // Verify user gone
         mockMvc.perform(get("/api/users/" + userId)

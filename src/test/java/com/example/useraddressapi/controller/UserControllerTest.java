@@ -102,8 +102,7 @@ class UserControllerTest {
                 .path("data").get(0).path("id").asText();
 
         mockMvc.perform(delete("/api/users/" + userId).header("Authorization", "Bearer " + token))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(true));
+                .andExpect(status().isNoContent());
     }
 
     @Test

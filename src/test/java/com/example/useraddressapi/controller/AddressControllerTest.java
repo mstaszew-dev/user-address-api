@@ -136,8 +136,7 @@ class AddressControllerTest {
                 .path("data").path("id").asText();
 
         mockMvc.perform(delete("/api/addresses/" + addrId).header("Authorization", "Bearer " + token))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(true));
+                .andExpect(status().isNoContent());
     }
 
     @Test
