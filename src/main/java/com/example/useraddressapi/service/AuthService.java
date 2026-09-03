@@ -1,0 +1,63 @@
+package com.example.useraddressapi.service;
+
+import com.example.useraddressapi.db.UserRepository;
+import com.example.useraddressapi.dto.AuthResponse;
+import com.example.useraddressapi.dto.LoginRequest;
+import com.example.useraddressapi.dto.RegisterRequest;
+import com.example.useraddressapi.exception.DuplicateResourceException;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+
+import java.time.Instant;
+import java.util.LinkedHashMap;
+import java.util.Map;
+
+@Service
+public class AuthService {
+
+    private final UserRepository userRepository;
+    private final JwtService jwtService;
+    private final PasswordEncoder passwordEncoder;
+
+    public AuthService(UserRepository userRepository, JwtService jwtService,
+                       PasswordEncoder passwordEncoder) {
+        this.userRepository = userRepository;
+        this.jwtService = jwtService;
+        this.passwordEncoder = passwordEncoder;
+    }
+
+    public AuthResponse register(RegisterRequest request) {
+        if (userRepository.findByEmail(request.email()).isPresent()) {
+            throw new DuplicateResourceException("Email already registered: " + request.email());
+        }
+
+        Map<String, Object> user = new LinkedHashMap<>();
+        user.put("name", request.name());
+        user.put("email", request.email());
+        user.put("password", passwordEncoder.encode(request.password()));
+        user.put("role", "USER");
+        user.put("createdAt", Instant.now().toString());
+
+        Map<String, Object> saved = userRepository.save(user);
+        String token = jwtService.generateToken(
+                (String) saved.get("id"), request.email(), "USER");
+
+        return new AuthResponse(token, (String) saved.get("id"),
+                request.email(), request.name());
+    }
+
+    public AuthResponse login(LoginRequest request) {
+        Map<String, Object> user = userRepository.findByEmail(request.email())
+                .orElseThrow(() -> new IllegalArgumentException("Invalid email or password"));
+
+        if (!passwordEncoder.matches(request.password(), (String) user.get("password"))) {
+            throw new IllegalArgumentException("Invalid email or password");
+        }
+
+        String token = jwtService.generateToken(
+                (String) user.get("id"), request.email(), (String) user.get("role"));
+
+        return new AuthResponse(token, (String) user.get("id"),
+                (String) user.get("email"), (String) user.get("name"));
+    }
+}

@@ -1,0 +1,5 @@
+node_modules/
+dist/
+target/
+coverage/
+src/main/resources/static/js/app.js

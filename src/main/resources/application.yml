@@ -1,0 +1,13 @@
+server:
+  port: 8080
+
+app:
+  jwt:
+    secret: "YourBase64EncodedSecretKeyAtLeast256BitsLongForHS256Algorithm1234567890"
+    expiration-ms: 86400000  # 24 hours
+
+spring:
+  thymeleaf:
+    cache: false
+    prefix: classpath:/templates/
+    suffix: .html

@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Users - UserAddress API</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-950 text-slate-200 min-h-screen">
+    <nav class="bg-slate-900/80 border-b border-slate-800 backdrop-blur">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center space-x-6">
+                    <a href="/dashboard" class="text-lg font-bold text-cyan-400">UserAddress API</a>
+                    <div class="hidden sm:flex space-x-4">
+                        <a href="/dashboard" class="text-sm text-slate-300 hover:text-cyan-400">Dashboard</a>
+                        <a href="/users" class="text-sm text-cyan-400">Users</a>
+                        <a href="/about" class="text-sm text-slate-300 hover:text-cyan-400">About</a>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <span class="text-sm text-slate-400" id="nav-user-name"></span>
+                    <button onclick="logout()"
+                            class="text-sm px-3 py-1.5 rounded-lg border border-slate-700 text-slate-300 hover:border-slate-500 hover:text-white">Sign out</button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div class="flex items-center justify-between mb-6">
+            <h1 class="text-2xl font-bold text-slate-100">User Management</h1>
+            <button onclick="showUserForm()"
+                    class="bg-cyan-600 hover:bg-cyan-500 text-white rounded-lg px-4 py-2 text-sm font-medium">New User</button>
+        </div>
+
+        <div id="error-box" class="hidden bg-red-500/15 border border-red-500/30 text-red-400 text-sm rounded-lg px-3 py-2 mb-4"></div>
+
+        <div class="border border-slate-800 bg-slate-900 rounded-xl overflow-x-auto">
+            <table class="w-full text-sm">
+                <thead>
+                    <tr class="border-b border-slate-800 text-left">
+                        <th class="px-4 py-3 text-xs uppercase text-slate-500 tracking-wide">Name</th>
+                        <th class="px-4 py-3 text-xs uppercase text-slate-500 tracking-wide">Email</th>
+                        <th class="px-4 py-3 text-xs uppercase text-slate-500 tracking-wide">Role</th>
+                        <th class="px-4 py-3 text-xs uppercase text-slate-500 tracking-wide">Created At</th>
+                        <th class="px-4 py-3 text-xs uppercase text-slate-500 tracking-wide">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="users-table-body" class="divide-y divide-slate-800/60">
+                </tbody>
+            </table>
+        </div>
+
+        <!-- New user modal -->
+        <div id="user-modal" class="hidden fixed inset-0 bg-black/60 flex items-center justify-center z-50">
+            <div class="bg-slate-900 border border-slate-800 rounded-xl p-6 w-full max-w-md space-y-4">
+                <h2 class="text-lg font-semibold text-slate-100">Create User</h2>
+                <div id="form-error" class="hidden bg-red-500/15 border border-red-500/30 text-red-400 text-sm rounded-lg px-3 py-2"></div>
+                <div>
+                    <label class="block text-sm text-slate-400 mb-1">Name</label>
+                    <input id="new-user-name" class="w-full rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-slate-100 focus:border-cyan-500 outline-none">
+                </div>
+                <div>
+                    <label class="block text-sm text-slate-400 mb-1">Email</label>
+                    <input id="new-user-email" type="email" class="w-full rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-slate-100 focus:border-cyan-500 outline-none">
+                </div>
+                <div>
+                    <label class="block text-sm text-slate-400 mb-1">Password</label>
+                    <input id="new-user-password" type="password" class="w-full rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-slate-100 focus:border-cyan-500 outline-none">
+                </div>
+                <div>
+                    <label class="block text-sm text-slate-400 mb-1">Role</label>
+                    <select id="new-user-role" class="w-full rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-slate-100 focus:border-cyan-500 outline-none">
+                        <option value="USER">USER</option>
+                        <option value="ADMIN">ADMIN</option>
+                    </select>
+                </div>
+                <div class="flex justify-end space-x-3 pt-2">
+                    <button onclick="hideUserForm()" class="text-sm px-4 py-2 rounded-lg border border-slate-700 text-slate-300 hover:border-slate-500">Cancel</button>
+                    <button onclick="createUser()" class="text-sm px-4 py-2 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white">Create</button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="/js/app.js"></script>
+</body>
+</html>
