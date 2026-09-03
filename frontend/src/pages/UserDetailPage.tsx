@@ -15,6 +15,7 @@ import {
 import { apiCall } from '../api/client';
 import type { Address, User } from '../api/types';
 import AddressCard from '../components/AddressCard';
+import { useAuth } from '../context/AuthContext';
 import AddressFormDialog from '../components/AddressFormDialog';
 import ConfirmDialog from '../components/ConfirmDialog';
 import ProfileFormDialog from '../components/ProfileFormDialog';
@@ -26,6 +27,7 @@ function initials(user: User): string {
 export default function UserDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { user: sessionUser, updateSession } = useAuth();
   const [profile, setProfile] = useState<User | null>(null);
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [error, setError] = useState('');
@@ -51,7 +53,13 @@ export default function UserDetailPage() {
   }, [id]);
 
   useEffect(() => {
-    void loadAll();
+    let ignore = false;
+    if (!ignore) {
+      void loadAll();
+    }
+    return () => {
+      ignore = true;
+    };
   }, [loadAll]);
 
   function openAddAddress() {
@@ -79,6 +87,17 @@ export default function UserDetailPage() {
 
   if (!profile && !error) {
     return null;
+  }
+
+  function handleProfileSaved() {
+    void loadAll();
+    if (profile && sessionUser && profile.id === sessionUser.userId) {
+      updateSession({
+        email: profile.email,
+        firstName: profile.firstName,
+        lastName: profile.lastName
+      });
+    }
   }
 
   return (
@@ -151,7 +170,7 @@ export default function UserDetailPage() {
           open={profileEditOpen}
           user={profile}
           onClose={() => setProfileEditOpen(false)}
-          onSaved={loadAll}
+          onSaved={handleProfileSaved}
         />
       )}
       <AddressFormDialog

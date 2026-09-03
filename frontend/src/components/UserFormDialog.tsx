@@ -36,8 +36,12 @@ export default function UserFormDialog({ open, onClose, onSaved }: UserFormDialo
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
-    if (!firstName.trim() || !lastName.trim() || !email.trim() || password.length < 6) {
+    if (!firstName.trim() || !lastName.trim() || password.length < 6) {
       setError('All fields are required and the password must be at least 6 characters.');
+      return;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+      setError('Please enter a valid email address.');
       return;
     }
     setSubmitting(true);

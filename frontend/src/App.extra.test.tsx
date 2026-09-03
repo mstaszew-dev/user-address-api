@@ -4,7 +4,7 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import App from './App';
 import RequireAuth from './components/RequireAuth';
-import { AuthProvider } from './context/AuthContext';
+import { AuthProvider, useAuth } from './context/AuthContext';
 import UserListPage from './pages/UserListPage';
 import UserDetailPage from './pages/UserDetailPage';
 import { apiCall } from './api/client';
@@ -213,5 +213,72 @@ describe('apiCall fallback error message', () => {
       })
     );
     await expect(apiCall('GET', '/x')).rejects.toThrow('Request failed: 418');
+  });
+});
+
+describe('apiCall 401 session expiry', () => {
+  it('clears the session and dispatches the expiry event on 401', async () => {
+    seedSession();
+    const listener = vi.fn();
+    window.addEventListener('auth:expired', listener);
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: false,
+        status: 401,
+        json: () => Promise.resolve({ success: false, message: 'Unauthorized', data: null })
+      })
+    );
+
+    await expect(apiCall('GET', '/users')).rejects.toThrow('Unauthorized');
+
+    expect(localStorage.getItem('token')).toBeNull();
+    expect(localStorage.getItem('authUser')).toBeNull();
+    expect(listener).toHaveBeenCalledTimes(1);
+    window.removeEventListener('auth:expired', listener);
+  });
+
+  it('does not dispatch the expiry event for a logged-out 401 (public login failure)', async () => {
+    const listener = vi.fn();
+    window.addEventListener('auth:expired', listener);
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: false,
+        status: 401,
+        json: () => Promise.resolve({ success: false, message: 'Invalid', data: null })
+      })
+    );
+
+    await expect(apiCall('POST', '/auth/login', {})).rejects.toThrow('Invalid');
+
+    expect(listener).not.toHaveBeenCalled();
+    window.removeEventListener('auth:expired', listener);
+  });
+});
+
+describe('AuthContext.updateSession', () => {
+  it('updates the stored session user', async () => {
+    seedSession();
+    let captured: ((c: Record<string, string>) => void) | null = null;
+    function Probe() {
+      const auth = useAuth();
+      captured = auth.updateSession;
+      return null;
+    }
+    render(
+      <MemoryRouter>
+        <AuthProvider>
+          <Probe />
+        </AuthProvider>
+      </MemoryRouter>
+    );
+
+    captured!({ firstName: 'Renamed' });
+
+    await waitFor(() => {
+      const stored = JSON.parse(localStorage.getItem('authUser')!);
+      expect(stored.firstName).toBe('Renamed');
+    });
   });
 });

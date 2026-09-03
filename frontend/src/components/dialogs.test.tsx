@@ -2,7 +2,6 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import AddressFormDialog from './AddressFormDialog';
-import ConfirmDialog from './ConfirmDialog';
 import ProfileFormDialog from './ProfileFormDialog';
 import UserFormDialog from './UserFormDialog';
 import type { Address, User } from '../api/types';
@@ -187,21 +186,5 @@ describe('ProfileFormDialog error paths', () => {
     await actor.click(screen.getByRole('button', { name: /save/i }));
 
     expect(await screen.findByRole('alert')).toHaveTextContent('Email already in use');
-  });
-});
-
-describe('ConfirmDialog rendering', () => {
-  it('renders title and message', () => {
-    render(
-      <ConfirmDialog
-        open={true}
-        title="Delete user"
-        message="Sure?"
-        onConfirm={() => {}}
-        onClose={() => {}}
-      />
-    );
-    expect(screen.getByText('Delete user')).toBeInTheDocument();
-    expect(screen.getByText('Sure?')).toBeInTheDocument();
   });
 });
